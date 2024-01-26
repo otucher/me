@@ -1,6 +1,7 @@
-import { Comment } from "../atoms/NewComment";
+import React from "react";
+import { Comment } from "../atoms/Comment";
 import Comments from "../molecules/Comments";
-import Likes, { Like } from "../molecules/Likes";
+import Likes, { Like } from "../atoms/Likes";
 
 export interface PostProps {
   title: string;
@@ -11,22 +12,18 @@ export interface PostProps {
   comments: Comment[];
 }
 
-const Post: React.FC<PostProps> = ({
-  title,
-  content,
-  user,
-  likes,
-  comments,
-}) => (
-  <div className="post">
-    <h3>{title}</h3>
-    <p>{content}</p>
-    <div className="post-meta">
-      <p>Author: {user}</p>
-      <Likes likes={likes} />
-      <Comments comments={comments} />
+const Post: React.FC<PostProps> = (props) => {
+  return (
+    <div className="post">
+      <h3>{props.title}</h3>
+      <p>{props.content}</p>
+      <div className="post-meta">
+        <p>Author: {props.user}</p>
+        <Likes likes={props.likes} />
+        <Comments comments={props.comments} />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default Post;
