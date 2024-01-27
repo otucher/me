@@ -1,45 +1,21 @@
 import React from "react";
-import Post, { PostProps } from "../organisms/Post";
+import { Post } from "../../models";
+import { Link } from "react-router-dom";
 
-var posts: PostProps[] = [
-  {
-    post: {
-      id: 0,
-      title: "My first post",
-      content: "This is my first post. I hope you like it!",
-      user: "Oliver",
-      timestamp: new Date(),
-    },
-    comments: [
-      {
-        user: "Jane",
-        content: "I like this post!",
-        timestamp: new Date(),
-        likes: [
-          { user: "John" },
-          { user: "John" },
-        ],
-      },
-      {
-        user: "Bob",
-        content: "This post was alright.",
-        timestamp: new Date(),
-        likes: [{ user: "Bob" }],
-      },
-    ],
-    likes: [
-      { user: "Jane" },
-      { user: "Bob" }
-    ],
-  },
-];
+interface PostsProps {
+  posts: Post[];
+}
 
-const Posts: React.FC = () => {
-  // TODO: fetch posts from server
+const Posts: React.FC<PostsProps> = ({ posts }) => {
   return (
     <div className="posts">
-      {posts.map((post, idx) => (
-        <Post key={idx} {...post} />
+      {posts.map((post) => (
+        <Link to={`/posts/${post.id}`}>
+          <div className="post-card">
+            <p>{post.title}</p>
+            <p>{post.content.slice(0, 128)}</p>
+          </div>
+        </Link>
       ))}
     </div>
   );

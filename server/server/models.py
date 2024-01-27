@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from sqlmodel import SQLModel, Field, Relationship
-
+from typing import Optional
+from sqlmodel import SQLModel, Field, Relationship  # type: ignore
 
 class Post(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -10,15 +10,7 @@ class Post(SQLModel, table=True):
     user: str
     timestamp: datetime = Field(default=datetime.now())
     comments: list['Comment'] = Relationship(back_populates="post")
-    likes: list['PostLike'] = Relationship(back_populates="post")
-
-
-class PostLike(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    user: str
-    timestamp: datetime = Field(default=datetime.now())
-    post_id: int = Field(foreign_key="post.id")
-    post: 'Post'  = Relationship(back_populates="likes")
+    likes: list['Like'] = Relationship(back_populates="post")
 
 
 class Comment(SQLModel, table=True):
@@ -28,12 +20,14 @@ class Comment(SQLModel, table=True):
     timestamp: datetime = Field(default=datetime.now())
     post_id: int = Field(foreign_key="post.id")
     post: 'Post' = Relationship(back_populates="comments")
-    likes: list['CommentLike'] = Relationship(back_populates="post_comment")
+    likes: list['Like'] = Relationship(back_populates="comment")
 
 
-class CommentLike(SQLModel, table=True):
+class Like(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user: str
     timestamp: datetime = Field(default=datetime.now())
-    comment_id: int = Field(foreign_key="comment.id")
-    post_comment: 'Comment' = Relationship(back_populates="likes")
+    comment_id: int | None = Field(default=None, foreign_key="comment.id")
+    comment: Optional['Comment']  = Relationship(back_populates="likes")
+    post_id: int | None = Field(default=None, foreign_key="post.id")
+    post: Optional['Post'] = Relationship(back_populates="likes")

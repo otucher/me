@@ -1,33 +1,26 @@
 import React, { useState } from "react";
-import { Comment } from "./Comment";
 
 interface NewCommentProps {
-  onSubmitComment: (comment: Comment) => void;
+  onSubmitCommentContent: (commentContent: string) => void;
 }
 
-const NewComment: React.FC<NewCommentProps> = ({ onSubmitComment }) => {
-  const [content, setContent] = useState("");
+const NewComment: React.FC<NewCommentProps> = ({ onSubmitCommentContent }) => {
+  const [commentContent, setCommentContent] = useState("");
   const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (content.trim() !== "") {
-      // TODO: infer user from session
-      const comment = {
-        user: "TestUser",
-        content,
-        timestamp: new Date(),
-      };
-      onSubmitComment(comment);
+    if (commentContent.trim() !== "") {
+      onSubmitCommentContent(commentContent);
       // reset the form state
-      setContent("");
+      setCommentContent("");
     }
   };
   return (
     <form onSubmit={handleCommentSubmit}>
-      <label htmlFor="content">Content:</label>
+      <label>Content:</label>
       <textarea
         id="content"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
+        value={commentContent}
+        onChange={(e) => setCommentContent(e.target.value)}
       />
       <button type="submit">Submit Comment</button>
     </form>

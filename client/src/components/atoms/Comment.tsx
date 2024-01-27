@@ -1,24 +1,14 @@
-import Likes, { Like } from "./Likes";
+import Likes from "../molecules/Likes";
+import { Comment } from "../../models";
 
-export interface Comment {
-  user: string;
-  content: string;
-  timestamp: Date;
-  likes?: Like[];
-}
-
-interface OptimisticComment extends Comment {
-  isOptimistic?: boolean;
-}
-
-const CommentComponent: React.FC<OptimisticComment> = (comment) => {
+const CommentComponent: React.FC<Comment> = (comment) => {
   return (
     <div className="comment">
       <strong>{comment.user}:</strong>
-      <p style={{ opacity: comment.isOptimistic ? 0.5 : undefined }}>
+      <p>
         {comment.content}
       </p>
-      <Likes likes={comment.likes || []} />
+      <Likes commentId={comment.id} />
     </div>
   );
 };
