@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "server"
+version = "0.1.0"
+description = ""
+authors = ["Oliver Tucher <oliver.tucher@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.109.0"
+sqlmodel = "^0.0.14"
+
+
+[tool.poetry.group.dev.dependencies]
+uvicorn = "^0.27.0"
+
+[tool.poetry.scripts]
+dev_server = "server.main:_start_dev_server"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

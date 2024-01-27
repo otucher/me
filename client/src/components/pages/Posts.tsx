@@ -3,10 +3,13 @@ import Post, { PostProps } from "../organisms/Post";
 
 var posts: PostProps[] = [
   {
-    title: "My first post",
-    content: "This is my first post. I hope you like it!",
-    user: "Oliver",
-    timestamp: new Date(),
+    post: {
+      id: 0,
+      title: "My first post",
+      content: "This is my first post. I hope you like it!",
+      user: "Oliver",
+      timestamp: new Date(),
+    },
     comments: [
       {
         user: "Jane",
@@ -24,7 +27,10 @@ var posts: PostProps[] = [
         likes: [{ user: "Bob" }],
       },
     ],
-    likes: [{ user: "Jane" }, { user: "Bob" }],
+    likes: [
+      { user: "Jane" },
+      { user: "Bob" }
+    ],
   },
 ];
 
