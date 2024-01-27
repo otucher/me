@@ -7,5 +7,5 @@ This package is maintained using [poetry](https://python-poetry.org/docs).
 Run this server locally:
 ```sh
 poetry install
-poetry run dev_server
+poetry run main
 ```

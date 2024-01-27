@@ -1,9 +1,11 @@
 from .models import Post, Comment, Like
 
+import os
 from pathlib import Path
 from typing import Sequence
 
 import sqlmodel as sm
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, SQLModel
@@ -28,6 +30,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/health")
+def health_check() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 @app.get("/posts")
@@ -115,7 +122,6 @@ def add_like(like: Like) -> Like:
         return like
 
 
-def start_dev_server() -> None:
-    import uvicorn
-
-    uvicorn.run("server.main:app", host="localhost", port=8000, reload=True)
+def main() -> None:
+    port = os.environ.get("PORT") or "8000"
+    uvicorn.run("server.main:app", host="0.0.0.0", port=int(port), proxy_headers=True, reload=True)
