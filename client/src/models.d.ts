@@ -17,7 +17,7 @@ export interface Comment {
   likes?: CommentLike[];
 }
 
-export interface Like{
+export interface Like {
   id: number;
   user: string;
   timestamp?: string;

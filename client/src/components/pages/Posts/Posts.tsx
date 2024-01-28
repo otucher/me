@@ -1,6 +1,7 @@
 import React from "react";
-import { Post } from "../../models";
+import { Post } from "../../../models";
 import { Link } from "react-router-dom";
+import "./style.css";
 
 interface PostsProps {
   posts: Post[];

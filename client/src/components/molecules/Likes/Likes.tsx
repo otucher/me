@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Like } from "../../models";
-import axiosInstance from "../../axiosInstance";
+import { Like } from "../../../models";
+import axiosInstance from "../../../axiosInstance";
+import "./style.css";
 
 interface LikesProps {
   commentId?: number;
@@ -15,13 +16,11 @@ const Likes: React.FC<LikesProps> = ({ commentId, postId }) => {
     if (postId && commentId) {
       throw new Error("Cannot have both postId and commentId");
     } else if (postId) {
-      axiosInstance.get(`/posts/${postId}/likes`)
-        .then((response) => setCurrentLikes(response.data))
+      axiosInstance.get(`/posts/${postId}/likes`).then((response) => setCurrentLikes(response.data));
     } else if (commentId) {
-      axiosInstance.get(`/comments/${commentId}/likes`)
-        .then((response) => setCurrentLikes(response.data))
+      axiosInstance.get(`/comments/${commentId}/likes`).then((response) => setCurrentLikes(response.data));
     }
-  }, [commentId, postId])
+  }, [commentId, postId]);
 
   const handleLike = () => {
     // TODO: infer user from session
@@ -31,8 +30,7 @@ const Likes: React.FC<LikesProps> = ({ commentId, postId }) => {
       post_id: postId,
     };
     setOptimisticLikes([...currentLikes, { id: -1, ...newLike }]);
-    axiosInstance.post("/likes", newLike)
-      .then((response) => setCurrentLikes([...currentLikes, response.data]))
+    axiosInstance.post("/likes", newLike).then((response) => setCurrentLikes([...currentLikes, response.data]));
   };
 
   // replace optimistic likes with real likes after server responds

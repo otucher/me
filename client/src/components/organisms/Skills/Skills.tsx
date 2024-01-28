@@ -1,4 +1,5 @@
 import React from "react";
+import "./style.css";
 
 const Skills: React.FC = () => (
   <div className="skills">

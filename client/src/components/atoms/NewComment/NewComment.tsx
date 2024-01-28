@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./style.css";
 
 interface NewCommentProps {
   onSubmitCommentContent: (commentContent: string) => void;
@@ -17,11 +18,7 @@ const NewComment: React.FC<NewCommentProps> = ({ onSubmitCommentContent }) => {
   return (
     <form onSubmit={handleCommentSubmit}>
       <label>Content:</label>
-      <textarea
-        id="content"
-        value={commentContent}
-        onChange={(e) => setCommentContent(e.target.value)}
-      />
+      <textarea id="content" value={commentContent} onChange={(e) => setCommentContent(e.target.value)} />
       <button type="submit">Submit Comment</button>
     </form>
   );

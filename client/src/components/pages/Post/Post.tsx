@@ -1,7 +1,8 @@
 import React from "react";
-import { Post } from "../../models";
-import Comments from "../molecules/Comments";
-import Likes from "../molecules/Likes";
+import { Post } from "../../../models";
+import Comments from "../../molecules/Comments/Comments";
+import Likes from "../../molecules/Likes/Likes";
+import "./style.css";
 
 const PostComponent: React.FC<Post> = (post) => {
   return (

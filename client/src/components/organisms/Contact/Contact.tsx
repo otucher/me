@@ -1,4 +1,5 @@
 import React from "react";
+import "./style.css";
 
 const Contact: React.FC = () => (
   <div className="contact-info">

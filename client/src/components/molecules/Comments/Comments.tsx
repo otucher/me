@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Comment } from "../../models";
-import axiosInstance from "../../axiosInstance";
-import NewComment from "../atoms/NewComment";
-import CommentComponent from "../atoms/Comment";
+import { Comment } from "../../../models";
+import axiosInstance from "../../../axiosInstance";
+import NewComment from "../../atoms/NewComment/NewComment";
+import CommentComponent from "../../atoms/Comment/Comment";
+import "./style.css";
 
 interface CommentsProps {
   postId: number;
@@ -17,19 +18,19 @@ const Comments: React.FC<CommentsProps> = ({ postId }) => {
   const [optimisticComments, setOptimisticComments] = useState<OptimisticComment[]>(currentComments);
 
   useEffect(() => {
-    axiosInstance.get(`/posts/${postId}/comments`)
-      .then((response) => setCurrentComments(response.data))
-  }, [postId])
+    axiosInstance.get(`/posts/${postId}/comments`).then((response) => setCurrentComments(response.data));
+  }, [postId]);
 
   const handleNewCommentContent = (commentContent: string) => {
     var newComment = {
       user: "TestUser",
       content: commentContent,
       post_id: postId,
-    }
-    setOptimisticComments([...currentComments, { id: -1, isOptimistic: true, ...newComment }]);  // temp fake id
-    axiosInstance.post("/comments", newComment)
-      .then((response) => setCurrentComments([...currentComments, response.data]))
+    };
+    setOptimisticComments([...currentComments, { id: -1, isOptimistic: true, ...newComment }]); // temp fake id
+    axiosInstance
+      .post("/comments", newComment)
+      .then((response) => setCurrentComments([...currentComments, response.data]));
   };
 
   // replace optimistic comments with real comments after server responds
@@ -43,7 +44,7 @@ const Comments: React.FC<CommentsProps> = ({ postId }) => {
         <ul>
           {optimisticComments.map((optimisticComment, idx) => (
             <li key={idx}>
-              <div className="optimistic-comment" style={{ opacity: optimisticComment.isOptimistic ? 0.5 : undefined}}>
+              <div className="optimistic-comment" style={{ opacity: optimisticComment.isOptimistic ? 0.5 : undefined }}>
                 <CommentComponent {...optimisticComment} />
               </div>
             </li>
