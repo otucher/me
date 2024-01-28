@@ -1,26 +1,14 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  traefik:
-    image: docker.io/library/traefik:v2.10.4
-    command: --api.insecure=true --providers.docker
-    ports:
-      - "80:80"
-      - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-
   client:
     build:
-      context: ./client
-    labels:
-      - traefik.http.routers.client.rule=(Host(`localhost`))
+      context: client
+    ports:
+      - "3000:80"
 
   server:
     build:
-      context: ./server
-    labels:
-      - traefik.http.routers.client.rule=(Host(`localhost.api`))
-
-
-
+      context: server
+    ports:
+      - "8000:8000"

@@ -53,7 +53,7 @@ export default class MeStack extends cdk.Stack {
       }),
       portMappings: [{ containerPort: 80, hostPort: 80 }],
       healthCheck: {
-        command: ["CMD-SHELL", `curl -f http://localhost:80/health || exit 1`],
+        command: ["CMD-SHELL", `curl -f http://localhost:80/ || exit 1`],
       },
     });
 

@@ -6,6 +6,8 @@ RUN yarn install && yarn build
 
 # Stage 2: Final image
 FROM nginx:alpine
+RUN apk update && apk upgrade && apk --no-cache add \
+  curl
 COPY --from=builder /src/build /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
