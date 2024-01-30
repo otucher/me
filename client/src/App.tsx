@@ -22,10 +22,10 @@ const App: React.FC = () => {
       <Header />
       <NavBar />
       <Routes>
-        <Route path="/" element={<About />} />
-        <Route path="/posts" element={<Posts posts={posts} />} />
-        {posts.map((post) => (
-          <Route path={`/posts/${post.id}`} element={<PostComponent {...post} />} />
+        <Route key={0} path="/" element={<About />} />
+        <Route key={1} path="/posts" element={<Posts posts={posts} />} />
+        {posts.map((post, idx) => (
+          <Route key={idx+2} path={`/posts/${post.id}`} element={<PostComponent {...post} />} />
         ))}
       </Routes>
       <Footer />

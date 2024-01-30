@@ -4,8 +4,6 @@ export interface Post {
   content: string;
   user: string;
   timestamp?: string;
-  comments?: Comment[];
-  likes?: PostLike[];
 }
 
 export interface Comment {
@@ -14,7 +12,6 @@ export interface Comment {
   content: string;
   timestamp?: string;
   post_id: number;
-  likes?: CommentLike[];
 }
 
 export interface Like {

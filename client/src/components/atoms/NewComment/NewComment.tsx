@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { FormEvent, useState } from "react";
 import "./style.css";
 
 interface NewCommentProps {
@@ -7,7 +7,7 @@ interface NewCommentProps {
 
 const NewComment: React.FC<NewCommentProps> = ({ onSubmitCommentContent }) => {
   const [commentContent, setCommentContent] = useState("");
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  const handleCommentSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (commentContent.trim() !== "") {
       onSubmitCommentContent(commentContent);

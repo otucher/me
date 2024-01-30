@@ -10,8 +10,8 @@ interface PostsProps {
 const Posts: React.FC<PostsProps> = ({ posts }) => {
   return (
     <div className="posts">
-      {posts.map((post) => (
-        <Link to={`/posts/${post.id}`}>
+      {posts.map((post, idx) => (
+        <Link key={idx} to={`/posts/${post.id}`}>
           <div className="post-card">
             <p>{post.title}</p>
             <p>{post.content.slice(0, 128)}</p>

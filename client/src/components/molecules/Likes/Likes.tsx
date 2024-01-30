@@ -22,16 +22,32 @@ const Likes: React.FC<LikesProps> = ({ commentId, postId }) => {
     }
   }, [commentId, postId]);
 
+  // TODO: infer user from session
+  const user = "Tester";
+
   const handleLike = () => {
-    // TODO: infer user from session
     const newLike = {
-      user: "Tester",
+      user,
       comment_id: commentId,
       post_id: postId,
     };
     setOptimisticLikes([...currentLikes, { id: -1, ...newLike }]);
     axiosInstance.post("/likes", newLike).then((response) => setCurrentLikes([...currentLikes, response.data]));
   };
+
+  const handleRemoveLike = () => {
+    const newLikes = currentLikes.filter((like) => like.user !== user)
+    setOptimisticLikes(newLikes);
+    if (postId && commentId) {
+      throw new Error("Cannot have both postId and commentId");
+    } else if (postId) {
+      axiosInstance.delete(`/posts/${postId}/likes/${user}`)
+        .then(() => setCurrentLikes(newLikes));
+    } else if (commentId) {
+      axiosInstance.delete(`/comments/${commentId}/likes/${user}`)
+        .then(() => setCurrentLikes(newLikes));
+    }
+  }
 
   // replace optimistic likes with real likes after server responds
   useEffect(() => setOptimisticLikes(currentLikes), [currentLikes]);
@@ -41,6 +57,7 @@ const Likes: React.FC<LikesProps> = ({ commentId, postId }) => {
   return (
     <div className="likes">
       <button onClick={handleLike}>Like</button>
+      <button onClick={handleRemoveLike}>Remove Like</button>
       <p style={{ opacity: isOptimistic ? 0.5 : undefined }}>
         {numLikes} {numLikes === 1 ? "like" : "likes"}
       </p>

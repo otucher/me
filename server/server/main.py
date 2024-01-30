@@ -44,9 +44,9 @@ def get_post(post_id: int) -> Post:
     with Session(engine) as session:
         statement = sm.select(Post).where(Post.id == post_id)
         post = session.exec(statement).first()
-        if post:
-            return post
-        raise HTTPException(status_code=404, detail=f"Post \"{post_id}\" not found")
+        if not post:
+            raise HTTPException(status_code=404, detail=f"Post \"{post_id}\" not found")
+        return post
 
 
 @app.get("/posts/{post_id}/likes")
@@ -55,6 +55,18 @@ def get_post_likes(post_id: int) -> Sequence[Like]:
         statement = sm.select(Like).where(Like.post_id == post_id)
         likes = session.exec(statement).all()
         return likes
+
+
+@app.delete("/posts/{post_id}/likes/{user}")
+def delete_post_like(post_id: int, user: str) -> dict[str, bool]:
+    with Session(engine) as session:
+        statement = sm.select(Like).where(Like.post_id == post_id).where(Like.user == user)
+        like = session.exec(statement).first()
+        if not like:
+            raise HTTPException(status_code=404, detail="Like for user post \"{post_id}\" and \"{user}\" not found")
+        session.delete(like)
+        session.commit()
+        return {"delete": True}
 
 
 @app.get("/posts/{post_id}/comments")
@@ -77,9 +89,27 @@ def get_comment(comment_id: int) -> Comment:
     with Session(engine) as session:
         statement = sm.select(Comment).where(Comment.id == comment_id)
         post = session.exec(statement).first()
-        if post:
-            return post
-        raise HTTPException(status_code=404, detail=f"Post \"{comment_id}\" not found")
+        if not post:
+            raise HTTPException(status_code=404, detail=f"Post \"{comment_id}\" not found")
+        return post
+
+
+@app.delete("/comments/{comment_id}")
+def delete_comment(comment_id: int) -> dict[str, bool]:
+    with Session(engine) as session:
+        comment = session.get(Comment, comment_id)
+        if not comment:
+            raise HTTPException(status_code=404, detail=f"Comment with id {comment_id} not found")
+        session.delete(comment)
+
+        # delete all child likes
+        statement = sm.select(Like).where(Like.comment_id == comment_id)
+        likes = session.exec(statement)
+        for like in likes:
+            session.delete(like)
+
+        session.commit()
+        return {"delete": True}
 
 
 @app.get("/comments/{comment_id}/likes")
@@ -88,6 +118,18 @@ def get_comment_likes(comment_id: int) -> Sequence[Like]:
         statement = sm.select(Like).where(Like.comment_id == comment_id)
         likes = session.exec(statement).all()
         return likes
+
+
+@app.delete("/comments/{comment_id}/likes/{user}")
+def delete_comment_like(comment_id: int, user: str) -> dict[str, bool]:
+    with Session(engine) as session:
+        statement = sm.select(Like).where(Like.comment_id == comment_id).where(Like.user == user)
+        like = session.exec(statement).first()
+        if not like:
+            raise HTTPException(status_code=404, detail=f"Like for comment id {comment_id} not found")
+        session.delete(like)
+        session.commit()
+        return {"delete": True}
 
 
 @app.post("/posts")
