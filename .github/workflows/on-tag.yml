@@ -1,0 +1,58 @@
+name: On Tag Workflow
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  deploy-repository:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - working-directory: cdk
+        run: |
+          yarn install --network-timeout 100000
+          yarn run build
+          npx cdk deploy resume-repo --require-approval=never --ci --progress=events
+
+  build-and-push:
+    needs: deploy-repository
+    strategy:
+      matrix:
+        directory:
+          - client
+          - server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
+          aws-region: us-east-1
+      - name: Build and push image
+        working-directory: ${{ matrix.directory }}
+        run: |
+          ecr_url=$(aws ecr describe-repositories --repository-names ... --query 'repositories[0].repositoryUri' --output text)
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ecr_url
+          tag=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
+          docker build -t $ecr_url:${{ matrix.directory }}-$tag .
+          docker push $ecr_url:${{ matrix.directory }}-$tag
+          docker tag $ecr_url:${{ matrix.directory }}-$tag $ecr_url:${{ matrix.directory }}-latest
+          docker push $ecr_url:${{ matrix.directory }}-latest
+
+  deploy-fargate:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - working-directory: cdk
+        run: |
+          yarn install --network-timeout 100000
+          yarn run build
+          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
+          npx cdk deploy resume --require-approval=never --ci --progress=events
