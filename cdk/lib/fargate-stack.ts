@@ -7,6 +7,8 @@ import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
+import * as r53 from "aws-cdk-lib/aws-route53";
+import * as r53Targets from "aws-cdk-lib/aws-route53-targets";
 
 interface Props extends cdk.StackProps {
   repositoryName: string;
@@ -99,30 +101,41 @@ export default class FargateStack extends cdk.Stack {
       vpc,
       internetFacing: true,
     });
-    loadBalancer.addRedirect({  // redirect HTTP -> HTTPS
-      sourceProtocol: elbv2.ApplicationProtocol.HTTP,
-      sourcePort: 80,
-      targetProtocol: elbv2.ApplicationProtocol.HTTPS,
-      targetPort: 443,
+
+    // Create custom URL
+    const hostedZone = new r53.PublicHostedZone(this, 'MyHostedZone', {
+      zoneName: `${id}.com`,
     });
+    const recordName = 'oliver-tucher';
+    new r53.ARecord(this, 'MyAliasRecord', {
+      recordName,
+      target: r53.RecordTarget.fromAlias(new r53Targets.LoadBalancerTarget(loadBalancer)),
+      zone: hostedZone,
+    });
+    new cdk.CfnOutput(this, "URL", { value: `https://${recordName}.${hostedZone.zoneName}` });
 
-    // create custom DNS
-    const domainName = `${id}.com`
-    const certificate = new acm.Certificate(this, "certificate", { domainName });
-    const dnsName = `oliver-tucher.${domainName}`;
-    new cdk.CfnOutput(this, "URL", { value: dnsName });
-    // TODO: make DNS record
-
+    // Add fargate service to load balancer
     const clientTargetGroup = new elbv2.ApplicationTargetGroup(this, "target-group", {
       targetGroupName: `${id}-client`,
       vpc,
       port: 80,
       targets: [fargateService.loadBalancerTarget(clientContainer)],
     });
-    const listener = loadBalancer.addListener("https-listener", {
+
+    // Add HTTPS listener
+    const certificate = new acm.Certificate(this, "certificate", { domainName: hostedZone.zoneName });
+    loadBalancer.addListener("https-listener", {
       port: 443,
       certificates: [certificate],
       defaultAction: elbv2.ListenerAction.forward([clientTargetGroup])
+    });
+
+    // Redirect HTTP to HTTPS
+    loadBalancer.addRedirect({
+      sourceProtocol: elbv2.ApplicationProtocol.HTTP,
+      sourcePort: 80,
+      targetProtocol: elbv2.ApplicationProtocol.HTTPS,
+      targetPort: 443,
     });
   }
 }
