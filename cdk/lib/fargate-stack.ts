@@ -1,10 +1,11 @@
 import { Construct } from "constructs";
-import * as cdk from "aws-cdk-lib";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
+import * as cdk from "aws-cdk-lib";
 import * as ecr from "aws-cdk-lib/aws-ecr";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 
 interface Props extends cdk.StackProps {
@@ -30,8 +31,12 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // create task definition
+    const executionRole = new iam.Role(this, 'MyECSTaskExecutionRole', {
+      assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+    });
     const taskDefinition = new ecs.FargateTaskDefinition(this, "task-definition", {
       family: id,
+      executionRole,
       runtimePlatform: {
         cpuArchitecture: ecs.CpuArchitecture.X86_64,
         operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
@@ -40,7 +45,7 @@ export default class FargateStack extends cdk.Stack {
 
     // Get repository and allow pull access from task definition
     const repository = ecr.Repository.fromRepositoryName(this, "repository", id)
-    repository.grantPull(taskDefinition.executionRole!);
+    repository.grantPull(executionRole);
 
     // create log group
     const logGroup = new logs.LogGroup(this, "log-group", { logGroupName: id });
