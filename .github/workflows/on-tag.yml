@@ -15,7 +15,29 @@ jobs:
         run: |
           yarn install --network-timeout 100000
           yarn run build
+          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
           npx cdk deploy resume-repo --require-approval=never --ci --progress=events
+
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check client and server version
+        run: |
+          # get tag, strip release candidate flag
+          tag=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
+          tag_wo_rc=$(echo $tag | sed -E 's/-rc\.?[0-9]*//)
+
+          client_version=$(cat client/package.json | jq -r '.version')
+          server_version=$(cat server/pyproject.toml | sed -n 's/version = "\(.*\)"/\1/p')
+          if [[ $client_version != $server_version ]]; then
+            echo "Client version \"${client_version}\" and/or server version \"${client_version}\" do not match."
+            echo "Please inspect package.json and pyproject.toml files."
+            exit 1
+          else if [[ $client_version != $tag_wo_rc || $server_version != $tag ]]; then
+            echo "Client version \"${client_version}\" and/or server version \"${client_version}\" do not match tag (without release candidate) \"${tag_wo_rc}\"
+            exit 1
+          fi
 
   build-and-push:
     needs: deploy-repository
