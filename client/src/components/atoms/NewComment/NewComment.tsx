@@ -1,24 +1,32 @@
 import React, { FormEvent, useState } from "react";
 import "./style.css";
+import { Comment } from "../../../models";
 
 interface NewCommentProps {
-  onSubmitCommentContent: (commentContent: string) => void;
+  postId: number;
+  user: string;
+  onSubmitComment: (comment: Comment) => void;
 }
 
-const NewComment: React.FC<NewCommentProps> = ({ onSubmitCommentContent }) => {
-  const [commentContent, setCommentContent] = useState("");
+const NewComment: React.FC<NewCommentProps> = ({ postId, user, onSubmitComment }) => {
+  const [content, setContent] = useState("");
   const handleCommentSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (commentContent.trim() !== "") {
-      onSubmitCommentContent(commentContent);
+    if (content.trim() !== "") {
+      onSubmitComment({
+        id: -1,
+        post_id: postId,
+        content,
+        user,
+      });
       // reset the form state
-      setCommentContent("");
+      setContent("");
     }
   };
   return (
     <form onSubmit={handleCommentSubmit}>
       <label>Content:</label>
-      <textarea id="content" value={commentContent} onChange={(e) => setCommentContent(e.target.value)} />
+      <textarea id="content" value={content} onChange={(e) => setContent(e.target.value)} />
       <button type="submit">Submit Comment</button>
     </form>
   );
