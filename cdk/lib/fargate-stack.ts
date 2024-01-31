@@ -27,7 +27,7 @@ export default class FargateStack extends cdk.Stack {
 
     // create cluster
     const cluster = new ecs.Cluster(this, "cluster", {
-      clusterName: "helix-atlas",
+      clusterName: "resume",
       vpc,
       enableFargateCapacityProviders: true,
     });
