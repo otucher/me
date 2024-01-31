@@ -12,7 +12,7 @@ from sqlmodel import Session, SQLModel
 
 # create tables (after importing models)
 here = Path(__file__).parent.resolve()
-db_url = f"sqlite:///{here.parent}/me.db"
+db_url = f"sqlite:///{here.parent}/resume.db"
 engine = sm.create_engine(db_url, echo=True)
 SQLModel.metadata.create_all(engine)
 

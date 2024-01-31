@@ -12,7 +12,7 @@ interface Props extends cdk.StackProps {
   gitTag: string;
 }
 
-export default class MeStack extends cdk.Stack {
+export default class FargateStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id, props);
     console.log(props);
@@ -38,17 +38,20 @@ export default class MeStack extends cdk.Stack {
       },
     });
 
+    // Get repository and allow pull access from task definition
+    const repository = ecr.Repository.fromRepositoryName(this, "repository", id)
+    repository.grantPull(taskDefinition.executionRole!);
+
     // create log group
     const logGroup = new logs.LogGroup(this, "log-group", { logGroupName: id });
 
     // add client container to task definition
-    const repository = ecr.Repository.fromRepositoryName(this, "repository", id)
     const clientContainer = taskDefinition.addContainer("client-container", {
-      containerName: "me-client",
+      containerName: `${id}-client`,
       essential: true,
       image: ecs.ContainerImage.fromEcrRepository(repository, `client-${props.gitTag}`),
       logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: "me-client",
+        streamPrefix: `${id}-client`,
         logGroup,
       }),
       portMappings: [{ containerPort: 80, hostPort: 80 }],
@@ -60,11 +63,11 @@ export default class MeStack extends cdk.Stack {
     // add server container to task definition
     // TODO: health check
     const serverContainer = taskDefinition.addContainer("server-container", {
-      containerName: "me-server",
+      containerName: `${id}-server`,
       essential: true,
       image: ecs.ContainerImage.fromEcrRepository(repository, `server-${props.gitTag}`),
       logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: "me-server",
+        streamPrefix: `${id}-server`,
         logGroup,
       }),
       portMappings: [{ containerPort: 8000, hostPort: 8000 }],
@@ -99,14 +102,14 @@ export default class MeStack extends cdk.Stack {
     });
 
     // create custom DNS
-    const domainName = "oliver.com"
+    const domainName = `${id}.com`
     const certificate = new acm.Certificate(this, "certificate", { domainName });
-    const dnsName = `me.${domainName}`;
+    const dnsName = `oliver-tucher.${domainName}`;
     new cdk.CfnOutput(this, "URL", { value: dnsName });
     // TODO: make DNS record
 
     const clientTargetGroup = new elbv2.ApplicationTargetGroup(this, "target-group", {
-      targetGroupName: "me-client",
+      targetGroupName: `${id}-client`,
       vpc,
       port: 80,
       targets: [fargateService.loadBalancerTarget(clientContainer)],

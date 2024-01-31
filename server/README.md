@@ -1,6 +1,6 @@
 # server
 
-A FastAPI REST API to serve requests to an SQLite database (me.db).
+A FastAPI REST API to serve requests to an SQLite database (resume.db).
 
 This package is maintained using [poetry](https://python-poetry.org/docs).
 
