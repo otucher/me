@@ -9,6 +9,11 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  REPOSITORY: ${{ github.repository }}
+  TAG: ${{ github.event.ref }} | sed 's/refs\/tags\///'
+
 jobs:
   check-version:
     runs-on: ubuntu-latest
@@ -17,8 +22,7 @@ jobs:
       - name: Check client and server version
         run: |
           # get tag, strip release candidate flag
-          tag=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
-          tag_wo_rc=$(echo $tag | sed -E 's/-rc\.?[0-9]*//')
+          tag_wo_rc=$(echo $TAG | sed -E 's/-rc\.?[0-9]*//')
 
           client_version=$(cat client/package.json | jq -r '.version')
           server_version=$(cat server/pyproject.toml | sed -n 's/version = "\(.*\)"/\1/p')
@@ -41,7 +45,6 @@ jobs:
         run: |
           yarn install --network-timeout 100000
           yarn run build
-          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
           npx cdk deploy resume-repo --require-approval=never --ci --progress=events
 
   build-and-push:
@@ -63,12 +66,11 @@ jobs:
       - name: Build and push image
         working-directory: ${{ matrix.directory }}
         run: |
-          ecr_url=$(aws ecr describe-repositories --repository-names ... --query 'repositories[0].repositoryUri' --output text)
+          ecr_url=$(aws ecr describe-repositories --repository-names resume --query 'repositories[0].repositoryUri' --output text)
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ecr_url
-          tag=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
-          docker build -t $ecr_url:${{ matrix.directory }}-$tag .
-          docker push $ecr_url:${{ matrix.directory }}-$tag
-          docker tag $ecr_url:${{ matrix.directory }}-$tag $ecr_url:${{ matrix.directory }}-latest
+          docker build -t $ecr_url:${{ matrix.directory }}-$TAG .
+          docker push $ecr_url:${{ matrix.directory }}-$TAG
+          docker tag $ecr_url:${{ matrix.directory }}-$TAG $ecr_url:${{ matrix.directory }}-latest
           docker push $ecr_url:${{ matrix.directory }}-latest
 
   deploy-fargate:
@@ -81,5 +83,4 @@ jobs:
         run: |
           yarn install --network-timeout 100000
           yarn run build
-          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
           npx cdk deploy resume --require-approval=never --ci --progress=events
