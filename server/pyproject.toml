@@ -12,7 +12,7 @@ sqlmodel = "^0.0.14"
 uvicorn = "^0.27.0"
 
 [tool.poetry.scripts]
-main = "server.main:main"
+server = "server.main:main"
 
 [build-system]
 requires = ["poetry-core"]

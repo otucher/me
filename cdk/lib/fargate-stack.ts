@@ -118,29 +118,48 @@ export default class FargateStack extends cdk.Stack {
     });
     new cdk.CfnOutput(this, "URL", { value: `https://${id}.${hostedZone.zoneName}` });
 
-    // Add fargate service to load balancer
-    const clientTargetGroup = new elbv2.ApplicationTargetGroup(this, "target-group", {
-      targetGroupName: `${id}-client`,
-      vpc,
-      port: 80,
-      targets: [fargateService.loadBalancerTarget(clientContainer)],
-    });
-
-    // Add HTTPS listener
+    // Add HTTPS
     const acmParameter = ssm.StringParameter.fromStringParameterName(this, 'acm-parameter', '/acm/oliver.tucher.com/arn');
     const certificate = acm.Certificate.fromCertificateArn(this, 'certificate', acmParameter.stringValue);
-    loadBalancer.addListener("https-listener", {
-      port: 443,
-      certificates: [certificate],
-      defaultAction: elbv2.ListenerAction.forward([clientTargetGroup])
-    });
-
-    // Redirect HTTP to HTTPS
     loadBalancer.addRedirect({
       sourceProtocol: elbv2.ApplicationProtocol.HTTP,
       sourcePort: 80,
       targetProtocol: elbv2.ApplicationProtocol.HTTPS,
       targetPort: 443,
+    });
+
+    // create target groups
+    const clientTargetGroup = new elbv2.ApplicationTargetGroup(this, "client-target-group", {
+      targetGroupName: `${id}-client`,
+      vpc,
+      port: 80,
+      targets: [fargateService.loadBalancerTarget(clientContainer)],
+    });
+    const serverTargetGroup = new elbv2.ApplicationTargetGroup(this, "server-target-group", {
+      targetGroupName: `${id}-server`,
+      vpc,
+      port: 80,
+      targets: [fargateService.loadBalancerTarget(serverContainer)],
+    });
+
+    // add target groups to load balancer
+    const listener = loadBalancer.addListener("https-listener", {
+      port: 443,
+      certificates: [certificate],
+      defaultAction: elbv2.ListenerAction.fixedResponse(404, {
+        contentType: "text/plain",
+        messageBody: "Not Found",
+      }),
+    });
+    listener.addAction("client-action", {
+      priority: 1,
+      conditions: [elbv2.ListenerCondition.pathPatterns(["/"])],
+      action: elbv2.ListenerAction.forward([clientTargetGroup]),
+    });
+    listener.addAction("server-action", {
+      priority: 2,
+      conditions: [elbv2.ListenerCondition.pathPatterns(["/api/*"])],
+      action: elbv2.ListenerAction.forward([serverTargetGroup]),
     });
   }
 }

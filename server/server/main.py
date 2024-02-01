@@ -16,11 +16,14 @@ db_url = f"sqlite:///{here.parent}/resume.db"
 engine = sm.create_engine(db_url, echo=True)
 SQLModel.metadata.create_all(engine)
 
-# create REST API
-app = FastAPI()
+# create REST API at /api
+app = FastAPI(root_path="/api")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+      "http://localhost:3000",
+      "https://resume.oliver-tucher.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,7 +32,7 @@ app.add_middleware(
 
 @app.get("/health")
 def health_check() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "healthy"}
 
 
 @app.get("/posts")
