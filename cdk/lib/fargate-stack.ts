@@ -33,7 +33,7 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // create task definition
-    const executionRole = new iam.Role(this, 'MyECSTaskExecutionRole', {
+    const executionRole = new iam.Role(this, 'task-def-execution-role', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
     });
     const taskDefinition = new ecs.FargateTaskDefinition(this, "task-definition", {
@@ -103,11 +103,11 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // Create custom URL
-    const hostedZone = new r53.PublicHostedZone(this, 'MyHostedZone', {
+    const hostedZone = new r53.PublicHostedZone(this, 'hosted-zone', {
       zoneName: `${id}.com`,
     });
     const recordName = 'oliver-tucher';
-    new r53.ARecord(this, 'MyAliasRecord', {
+    new r53.ARecord(this, 'alias-record', {
       recordName,
       target: r53.RecordTarget.fromAlias(new r53Targets.LoadBalancerTarget(loadBalancer)),
       zone: hostedZone,
@@ -123,7 +123,10 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // Add HTTPS listener
-    const certificate = new acm.Certificate(this, "certificate", { domainName: hostedZone.zoneName });
+    const certificate = new acm.Certificate(this, "certificate", {
+      domainName: hostedZone.zoneName,
+      validation: acm.CertificateValidation.fromDns(hostedZone),
+    });
     loadBalancer.addListener("https-listener", {
       port: 443,
       certificates: [certificate],
