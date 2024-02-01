@@ -35,15 +35,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-version
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-      - working-directory: cdk
-        run: |
-          yarn install --dev --network-timeout 100000
-          yarn run build
-          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
-          export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
-          node_modules/.bin/cdk deploy resume-repo --require-approval=never --ci
+      - uses: ./.github/actions/cdk-deploy
+        with:
+          stack-name: resume-repo
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -56,11 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - name: Configure AWS
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
-          aws-region: us-east-1
+      - uses: ./.github/actions/configure-aws
       - name: Build and push image
         working-directory: ${{ matrix.directory }}
         run: |
@@ -77,12 +67,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-      - working-directory: cdk
-        run: |
-          yarn install --dev --network-timeout 100000
-          yarn run build
-          export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
-          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
-          node_modules/.bin/cdk deploy resume --require-approval=never --ci
+      - uses: ./.github/actions/cdk-deploy
+        with:
+          stack-name: resume

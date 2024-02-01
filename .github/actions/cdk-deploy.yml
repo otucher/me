@@ -1,0 +1,23 @@
+name: CDK Deploy
+
+description: Deploy CDK Stack
+
+inputs:
+  stack-name:
+    description: CDK Stack Name
+    required: true
+    default: --all
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+    - uses: ./.github/actions/configure-aws
+    - name: Deploy CDK
+      working-directory: cdk
+      run: |
+        yarn install --dev --network-timeout 100000
+        yarn run build
+        export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
+        export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
+        node_modules/.bin/cdk deploy ${{ inputs.stack-name }} --require-approval=never --ci
