@@ -64,20 +64,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - name: Configure AWS
+      - &configure-aws
+        name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
           aws-region: us-east-1
+      - &set-environment-variables
+        name: Set environment variables
+        run: |
+          echo "export AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
+          echo "export AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
+          echo "export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')" >> $GITHUB_ENV
+          echo "export GIT_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+      - &yarn-install
+        name: Yarn install
+        working-directory: cdk
+        run: yarn install --dev --network-timeout 100000
       - name: Deploy CDK
         working-directory: cdk
-        run: |
-          yarn install --dev --network-timeout 100000
-          export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
-          export AWS_DEFAULT_REGION="us-east-1"
-          export REPOSITORY=resume #$(echo ${{ github.repository }} | sed 's/^otucher\///')
-          export GIT_TAG=$(git describe --tags --abbrev=0)
-          node_modules/.bin/cdk deploy resume-repo --require-approval=never --ci
+        run: node_modules/.bin/cdk deploy resume-repo --require-approval=never --ci
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -91,23 +97,17 @@ jobs:
           - server
     steps:
       - uses: actions/checkout@v4
-      - name: Configure AWS
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
-          aws-region: us-east-1
+      - <<: *configure-aws
+      - <<: *set-environment-variables
       - name: Build and push image
         working-directory: ${{ matrix.directory }}
         run: |
-          repository=$(echo ${{ github.repository }} | sed 's/^otucher\///')
-          repository=resume #$(echo ${{ github.repository }} | sed 's/^otucher\///')
-          ecr_url=$(aws ecr describe-repositories --repository-names $repository --query 'repositories[0].repositoryUri' --output text)
+          ecr_url=$(aws ecr describe-repositories --repository-names $REPOSITORY --query 'repositories[0].repositoryUri' --output text)
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ecr_url
-          tag=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
-          docker build -t $ecr_url:${{ matrix.directory }}-$tag .
-          docker push $ecr_url:${{ matrix.directory }}-$tag
-          docker tag $ecr_url:${{ matrix.directory }}-$tag $ecr_url:${{ matrix.directory }}-latest
-          docker push $ecr_url:${{ matrix.directory }}-latest
+          docker build -t "$ecr_url:${{ matrix.directory }}-$GIT_TAG" .
+          docker push "$ecr_url:${{ matrix.directory }}-$GIT_TAG"
+          docker tag "$ecr_url:${{ matrix.directory }}-$GIT_TAG" "$ecr_url:${{ matrix.directory }}-latest"
+          docker push "$ecr_url:${{ matrix.directory }}-latest"
 
   deploy-fargate:
     runs-on: ubuntu-latest
@@ -117,17 +117,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - name: Configure AWS
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
-          aws-region: us-east-1
+      - <<: *configure-aws
+      - <<: *set-environment-variables
+      - <<: *yarn-install
       - name: Deploy CDK
         working-directory: cdk
-        run: |
-          yarn install --dev --network-timeout 100000
-          export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
-          export AWS_DEFAULT_REGION="us-east-1"
-          export REPOSITORY=resume #$(echo ${{ github.repository }} | sed 's/^otucher\///')
-          export GIT_TAG=$(git describe --tags --abbrev=0)
-          node_modules/.bin/cdk deploy resume --require-approval=never --ci
+        run: node_modules/.bin/cdk deploy resume --require-approval=never --ci
