@@ -50,7 +50,11 @@ export default class FargateStack extends cdk.Stack {
     repository.grantPull(executionRole);
 
     // create log group
-    const logGroup = new logs.LogGroup(this, "log-group", { logGroupName: id });
+    const logGroup = new logs.LogGroup(this, "log-group", {
+      logGroupName: id,
+      retention: logs.RetentionDays.SIX_MONTHS,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
 
     // add client container to task definition
     const clientContainer = taskDefinition.addContainer("client-container", {
