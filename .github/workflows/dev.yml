@@ -71,7 +71,7 @@ jobs:
           yarn install --dev --network-timeout 100000
           export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
           export AWS_DEFAULT_REGION="us-east-1"
-          export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
+          export REPOSITORY=resume #$(echo ${{ github.repository }} | sed 's/^otucher\///')
           export GIT_TAG=$(git describe --tags --abbrev=0)
           node_modules/.bin/cdk deploy resume-repo --require-approval=never --ci
 
@@ -96,6 +96,7 @@ jobs:
         working-directory: ${{ matrix.directory }}
         run: |
           repository=$(echo ${{ github.repository }} | sed 's/^otucher\///')
+          repository=resume #$(echo ${{ github.repository }} | sed 's/^otucher\///')
           ecr_url=$(aws ecr describe-repositories --repository-names $repository --query 'repositories[0].repositoryUri' --output text)
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ecr_url
           tag=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
@@ -123,6 +124,6 @@ jobs:
           yarn install --dev --network-timeout 100000
           export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
           export AWS_DEFAULT_REGION="us-east-1"
-          export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
+          export REPOSITORY=resume #$(echo ${{ github.repository }} | sed 's/^otucher\///')
           export GIT_TAG=$(git describe --tags --abbrev=0)
           node_modules/.bin/cdk deploy resume --require-approval=never --ci
