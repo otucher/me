@@ -31,7 +31,7 @@ const Comments: React.FC<CommentsProps> = ({ postId }) => {
   return (
     <div className="comments">
       <h3>Comments</h3>
-      <NewComment postId={postId} onSubmitComment={handleNewComment} />
+      <NewComment user={"TestUser"} postId={postId} onSubmitComment={handleNewComment} />
       <ul>
         {comments.map((comment, idx) => (
           <li key={idx}>
