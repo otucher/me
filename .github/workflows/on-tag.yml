@@ -39,7 +39,7 @@ jobs:
       - uses: actions/setup-node@v3
       - working-directory: cdk
         run: |
-          yarn install --network-timeout 100000
+          yarn install --dev --network-timeout 100000
           yarn run build
           export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
           export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
@@ -81,7 +81,7 @@ jobs:
       - uses: actions/setup-node@v3
       - working-directory: cdk
         run: |
-          yarn install --network-timeout 100000
+          yarn install --dev --network-timeout 100000
           yarn run build
           export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
           export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
