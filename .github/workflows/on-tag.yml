@@ -13,7 +13,7 @@ jobs:
   check-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout
+      - uses: actions/checkout@v3
       - name: Check client and server version
         run: |
           # get tag, strip release candidate flag
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-version
     steps:
-      - uses: actions/checkout
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/cdk-deploy
         with:
           stack-name: resume-repo
@@ -49,8 +49,8 @@ jobs:
           - client
           - server
     steps:
-      - uses: actions/checkout
-      - uses: actions/setup-node
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
       - uses: ./.github/actions/configure-aws
       - name: Build and push image
         working-directory: ${{ matrix.directory }}
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
-      - uses: actions/checkout
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/cdk-deploy
         with:
           stack-name: resume
