@@ -12,7 +12,7 @@ runs:
   steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
-    - uses: ./.github/actions/configure-aws
+    - uses: ./.github/actions/configure-aws.yml
     - name: Deploy CDK
       working-directory: cdk
       run: |
