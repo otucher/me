@@ -46,9 +46,10 @@ jobs:
         working-directory: cdk
         run: |
           yarn install --dev --network-timeout 100000
-          yarn run build
-          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
+          export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
+          export AWS_DEFAULT_REGION="us-east-1"
           export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
+          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
           node_modules/.bin/cdk deploy resume-repo --require-approval=never --ci
 
   build-and-push:
@@ -93,7 +94,8 @@ jobs:
         working-directory: cdk
         run: |
           yarn install --dev --network-timeout 100000
-          yarn run build
-          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
+          export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
+          export AWS_DEFAULT_REGION="us-east-1"
           export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
+          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
           node_modules/.bin/cdk deploy resume --require-approval=never --ci
