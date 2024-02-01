@@ -36,9 +36,20 @@ jobs:
     needs: check-version
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/cdk-deploy
+      - uses: actions/setup-node@v3
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          stack-name: resume-repo
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
+          aws-region: us-east-1
+      - name: Deploy CDK
+        working-directory: cdk
+        run: |
+          yarn install --dev --network-timeout 100000
+          yarn run build
+          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
+          export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
+          node_modules/.bin/cdk deploy resume-repo --require-approval=never --ci
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -51,7 +62,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - uses: ./.github/configure-aws
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
+          aws-region: us-east-1
       - name: Build and push image
         working-directory: ${{ matrix.directory }}
         run: |
@@ -69,6 +84,17 @@ jobs:
     needs: build-and-push
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/cdk-deploy
+      - uses: actions/setup-node@v3
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          stack-name: resume
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
+          aws-region: us-east-1
+      - name: Deploy CDK
+        working-directory: cdk
+        run: |
+          yarn install --dev --network-timeout 100000
+          yarn run build
+          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
+          export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
+          node_modules/.bin/cdk deploy resume --require-approval=never --ci
