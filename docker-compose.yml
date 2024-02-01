@@ -20,6 +20,22 @@ services:
       - traefik.enable=true
       - traefik.http.routers.client.rule=Host(`localhost`)
 
+  client-dev:
+    build:
+      context: client
+      target: builder
+    working_dir: /mnt
+    volumes:
+      - ./client:/mnt
+    command: ["yarn", "start"]
+    expose:
+      - 3000
+    environment:
+      - PUBLIC_URL=/dev
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.client-dev.rule=Host(`localhost`) && PathPrefix(`/dev`)
+
   server:
     build: server
     labels:
