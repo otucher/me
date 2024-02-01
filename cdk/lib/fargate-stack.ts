@@ -21,10 +21,8 @@ export default class FargateStack extends cdk.Stack {
     super(scope, id, props);
     console.log(props);
 
-    // create vpc
-    const vpc = new ec2.Vpc(this, "vpc", {
-      vpcName: id,
-    });
+    // get vpc
+    const vpc = ec2.Vpc.fromLookup(this, "vpc", { isDefault: true });
 
     // create cluster
     const cluster = new ecs.Cluster(this, "cluster", {
@@ -73,7 +71,6 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // add server container to task definition
-    // TODO: health check
     const serverContainer = taskDefinition.addContainer("server-container", {
       containerName: `${id}-server`,
       essential: true,
@@ -146,18 +143,10 @@ export default class FargateStack extends cdk.Stack {
     const listener = loadBalancer.addListener("https-listener", {
       port: 443,
       certificates: [certificate],
-      defaultAction: elbv2.ListenerAction.fixedResponse(404, {
-        contentType: "text/plain",
-        messageBody: "Not Found",
-      }),
-    });
-    listener.addAction("client-action", {
-      priority: 1,
-      conditions: [elbv2.ListenerCondition.pathPatterns(["/"])],
-      action: elbv2.ListenerAction.forward([clientTargetGroup]),
+      defaultAction: elbv2.ListenerAction.forward([clientTargetGroup]),
     });
     listener.addAction("server-action", {
-      priority: 2,
+      priority: 1,
       conditions: [elbv2.ListenerCondition.pathPatterns(["/api/*"])],
       action: elbv2.ListenerAction.forward([serverTargetGroup]),
     });
