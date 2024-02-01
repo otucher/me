@@ -85,5 +85,5 @@ jobs:
         run: |
           yarn install --network-timeout 100000
           yarn run build
-          export GIT_tag=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
+          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
           npx cdk deploy resume --require-approval=never --ci --progress=events
