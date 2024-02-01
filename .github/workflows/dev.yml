@@ -71,10 +71,10 @@ jobs:
           aws-region: us-east-1
       - name: Set environment variables
         run: |
-          echo "export AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
-          echo "export AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
-          echo "export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')" >> $GITHUB_ENV
-          echo "export GIT_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          echo "::set-env name=AWS_ACCOUNT_ID::${{ secrets.AWS_ACCOUNT_ID }}"
+          echo "::set-env name=AWS_DEFAULT_REGION::us-east-1"
+          echo "::set-env name=REPOSITORY::$(echo ${{ github.repository }} | sed 's/^otucher\///')"
+          echo "::set-env name=GIT_TAG::$(git describe --tags --abbrev=0)"
       - name: Yarn install
         working-directory: cdk
         run: yarn install --dev --network-timeout 100000
@@ -101,10 +101,10 @@ jobs:
           aws-region: us-east-1
       - name: Set environment variables
         run: |
-          echo "export AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
-          echo "export AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
-          echo "export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')" >> $GITHUB_ENV
-          echo "export GIT_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          echo "::set-env name=AWS_ACCOUNT_ID::${{ secrets.AWS_ACCOUNT_ID }}"
+          echo "::set-env name=AWS_DEFAULT_REGION::us-east-1"
+          echo "::set-env name=REPOSITORY::$(echo ${{ github.repository }} | sed 's/^otucher\///')"
+          echo "::set-env name=GIT_TAG::$(git describe --tags --abbrev=0)"
       - name: Build and push image
         working-directory: ${{ matrix.directory }}
         run: |
@@ -130,10 +130,10 @@ jobs:
           aws-region: us-east-1
       - name: Set environment variables
         run: |
-          echo "export AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
-          echo "export AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
-          echo "export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')" >> $GITHUB_ENV
-          echo "export GIT_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          echo "::set-env name=AWS_ACCOUNT_ID::${{ secrets.AWS_ACCOUNT_ID }}"
+          echo "::set-env name=AWS_DEFAULT_REGION::us-east-1"
+          echo "::set-env name=REPOSITORY::$(echo ${{ github.repository }} | sed 's/^otucher\///')"
+          echo "::set-env name=GIT_TAG::$(git describe --tags --abbrev=0)"
       - name: Yarn install
         working-directory: cdk
         run: yarn install --dev --network-timeout 100000
