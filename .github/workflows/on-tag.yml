@@ -36,7 +36,7 @@ jobs:
     needs: check-version
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/cdk-deploy.yml
+      - uses: ./.github/cdk-deploy
         with:
           stack-name: resume-repo
 
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - uses: ./.github/actions/configure-aws.yml
+      - uses: ./.github/configure-aws
       - name: Build and push image
         working-directory: ${{ matrix.directory }}
         run: |
@@ -69,6 +69,6 @@ jobs:
     needs: build-and-push
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/cdk-deploy.yml
+      - uses: ./.github/cdk-deploy
         with:
           stack-name: resume

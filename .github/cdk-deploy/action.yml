@@ -12,9 +12,10 @@ runs:
   steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
-    - uses: ./.github/actions/configure-aws.yml
+    - uses: ./.github/configure-aws
     - name: Deploy CDK
       working-directory: cdk
+      shell: bash
       run: |
         yarn install --dev --network-timeout 100000
         yarn run build
