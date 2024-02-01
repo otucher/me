@@ -1,14 +1,28 @@
 version: '3.8'
 
 services:
-  client:
-    build:
-      context: client
+  traefik:
+    image: traefik:latest
+    command:
+      - --api.insecure=true  # allow dashboard
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --log.level=DEBUG
     ports:
-      - "3000:80"
+      - 80:80
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  client:
+    build: client
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.client.rule=Host(`localhost`)
 
   server:
-    build:
-      context: server
-    ports:
-      - "8000:8000"
+    build: server
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.server.rule=Host(`localhost`) && PathPrefix(`/api`)
+      - traefik.http.services.server.loadbalancer.server.port=8000

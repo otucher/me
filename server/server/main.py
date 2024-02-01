@@ -20,10 +20,11 @@ SQLModel.metadata.create_all(engine)
 app = FastAPI(root_path="/api")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-      "http://localhost:3000",
-      "https://resume.oliver-tucher.com",
-    ],
+    allow_origins=["*"],
+    # [
+    #   "http://localhost:3000",
+    #   "https://resume.oliver-tucher.com",
+    # ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -164,4 +165,4 @@ def add_like(like: Like) -> Like:
 
 def main() -> None:
     port = os.environ.get("PORT") or "8000"
-    uvicorn.run("server.main:app", host="localhost", port=int(port), proxy_headers=True, reload=True)
+    uvicorn.run("server.main:app", host="0.0.0.0", port=int(port), proxy_headers=True, reload=True)
