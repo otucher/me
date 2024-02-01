@@ -9,6 +9,7 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as r53 from "aws-cdk-lib/aws-route53";
 import * as r53Targets from "aws-cdk-lib/aws-route53-targets";
+import * as ssm from "aws-cdk-lib/aws-ssm";
 
 interface Props extends cdk.StackProps {
   repositoryName: string;
@@ -107,16 +108,15 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // Create custom URL
-    const hostedZone = new r53.PublicHostedZone(this, 'hosted-zone', {
-      zoneName: `${id}.com`,
+    const hostedZone = r53.PublicHostedZone.fromLookup(this, 'hosted-zone', {
+      domainName: 'oliver-tucher.com',
     });
-    const recordName = 'oliver-tucher';
     new r53.ARecord(this, 'alias-record', {
-      recordName,
+      recordName: id,
       target: r53.RecordTarget.fromAlias(new r53Targets.LoadBalancerTarget(loadBalancer)),
       zone: hostedZone,
     });
-    new cdk.CfnOutput(this, "URL", { value: `https://${recordName}.${hostedZone.zoneName}` });
+    new cdk.CfnOutput(this, "URL", { value: `https://${id}.${hostedZone.zoneName}` });
 
     // Add fargate service to load balancer
     const clientTargetGroup = new elbv2.ApplicationTargetGroup(this, "target-group", {
@@ -127,10 +127,10 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // Add HTTPS listener
-    const certificate = new acm.Certificate(this, "certificate", {
-      domainName: hostedZone.zoneName,
-      validation: acm.CertificateValidation.fromDns(hostedZone),
+    const acmParameter = ssm.StringParameter.fromSecureStringParameterAttributes(this, 'acm-parameter', {
+      parameterName: '/acm/oliver.tucher.com/arn',
     });
+    const certificate = acm.Certificate.fromCertificateArn(this, 'certificate', acmParameter.stringValue);
     loadBalancer.addListener("https-listener", {
       port: 443,
       certificates: [certificate],
