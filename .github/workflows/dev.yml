@@ -64,21 +64,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - &configure-aws
-        name: Configure AWS
+      - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
           aws-region: us-east-1
-      - &set-environment-variables
-        name: Set environment variables
+      - name: Set environment variables
         run: |
           echo "export AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
           echo "export AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
           echo "export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')" >> $GITHUB_ENV
           echo "export GIT_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-      - &yarn-install
-        name: Yarn install
+      - name: Yarn install
         working-directory: cdk
         run: yarn install --dev --network-timeout 100000
       - name: Deploy CDK
@@ -97,8 +94,17 @@ jobs:
           - server
     steps:
       - uses: actions/checkout@v4
-      - <<: *configure-aws
-      - <<: *set-environment-variables
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
+          aws-region: us-east-1
+      - name: Set environment variables
+        run: |
+          echo "export AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
+          echo "export AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
+          echo "export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')" >> $GITHUB_ENV
+          echo "export GIT_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
       - name: Build and push image
         working-directory: ${{ matrix.directory }}
         run: |
@@ -117,9 +123,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - <<: *configure-aws
-      - <<: *set-environment-variables
-      - <<: *yarn-install
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
+          aws-region: us-east-1
+      - name: Set environment variables
+        run: |
+          echo "export AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
+          echo "export AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
+          echo "export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')" >> $GITHUB_ENV
+          echo "export GIT_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+      - name: Yarn install
+        working-directory: cdk
+        run: yarn install --dev --network-timeout 100000
       - name: Deploy CDK
         working-directory: cdk
         run: node_modules/.bin/cdk deploy resume --require-approval=never --ci
