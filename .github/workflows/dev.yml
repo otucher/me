@@ -1,39 +1,62 @@
-name: On Tag Workflow
+name: Dev Branch Push Workflow
 
 on:
   push:
-    tags:
-      - '*'
+    branches-ignore:
+      - main
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  check-version:
+  tag:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check client and server version
+      - name: Tag commit
         run: |
-          # get tag, strip release candidate flag
-          tag=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
-          tag_wo_rc=$(echo $tag | sed -E 's/-rc\.?[0-9]*//')
+          git fetch --tags
 
+          # if commit already tagged, skip tagging
+          current_tag=$(git tag --points-at HEAD)
+          if [[ $current_tag ]]; then
+            echo "commit $(git rev-parse HEAD) already tagged at $current_tag"
+            exit 0
+          fi
+
+          # get version from package.json and pyproject.toml
           client_version=$(cat client/package.json | jq -r '.version')
           server_version=$(cat server/pyproject.toml | sed -n 's/version = "\(.*\)"/\1/p')
-          if [[ $client_version != $server_version ]]; then
+          if [[ $client_version != "$server_version" ]]; then
             echo "Client version \"${client_version}\" and/or server version \"${client_version}\" do not match."
             echo "Please inspect package.json and pyproject.toml files."
             exit 1
-          elif [[ $client_version != "$tag_wo_rc" || $server_version != "$tag_wo_rc" ]]; then
-            echo "Client version \"${client_version}\" and/or server version \"${client_version}\" do not match tag (without release candidate) \"${tag_wo_rc}\""
+          fi
+          echo "Version: $client_version"
+          version=$client_version
+
+          # check if version is available
+          if [[ $(git tag --list "$version") ]]; then
+            echo "Version $version already released. Increment version in package.json and pyproject.toml files."
             exit 1
           fi
 
+          # for dev branch, use next available release candidate
+          tag=$version
+          for i in {1..999}; do
+            tag="$version-rc.${i}"
+            [[ ! $(git tag --list "$tag") ]] && break
+          done
+          echo "Tag: $tag"
+
+          # tag :)
+          git tag -m "Tagging ${GITHUB_REF#refs/heads/} with $tag" "$tag"
+          git push origin "$tag"
+
   deploy-repository:
     runs-on: ubuntu-latest
-    needs: check-version
+    needs: tag
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -49,12 +72,14 @@ jobs:
           export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
           export AWS_DEFAULT_REGION="us-east-1"
           export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
-          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
+          export GIT_TAG=$(git describe --tags --abbrev=0)
           node_modules/.bin/cdk deploy resume-repo --require-approval=never --ci
 
   build-and-push:
     runs-on: ubuntu-latest
-    needs: deploy-repository
+    needs:
+      - tag
+      - deploy-repository
     strategy:
       matrix:
         directory:
@@ -81,7 +106,9 @@ jobs:
 
   deploy-fargate:
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs:
+      - tag
+      - build-and-push
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -97,5 +124,5 @@ jobs:
           export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
           export AWS_DEFAULT_REGION="us-east-1"
           export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
-          export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
+          export GIT_TAG=$(git describe --tags --abbrev=0)
           node_modules/.bin/cdk deploy resume --require-approval=never --ci
