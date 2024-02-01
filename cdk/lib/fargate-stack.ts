@@ -127,9 +127,7 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // Add HTTPS listener
-    const acmParameter = ssm.StringParameter.fromSecureStringParameterAttributes(this, 'acm-parameter', {
-      parameterName: '/acm/oliver.tucher.com/arn',
-    });
+    const acmParameter = ssm.StringParameter.fromStringParameterName(this, 'acm-parameter', '/acm/oliver.tucher.com/arn');
     const certificate = acm.Certificate.fromCertificateArn(this, 'certificate', acmParameter.stringValue);
     loadBalancer.addListener("https-listener", {
       port: 443,
