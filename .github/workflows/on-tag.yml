@@ -43,7 +43,7 @@ jobs:
           yarn run build
           export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
           export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
-          npx cdk deploy resume-repo --require-approval=never --ci --progress=events
+          cdk deploy resume-repo --require-approval=never --ci
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -85,4 +85,4 @@ jobs:
           yarn run build
           export REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')
           export GIT_TAG=$(echo ${{ github.event.ref }} | sed 's/refs\/tags\///')
-          npx cdk deploy resume --require-approval=never --ci --progress=events
+          cdk deploy resume --require-approval=never --ci
