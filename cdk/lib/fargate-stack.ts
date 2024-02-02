@@ -34,8 +34,8 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // create task definition
-    const executionRole = new iam.Role(this, 'task-def-execution-role', {
-      assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+    const executionRole = new iam.Role(this, "task-def-execution-role", {
+      assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
     });
     const taskDefinition = new ecs.FargateTaskDefinition(this, "task-definition", {
       family: id,
@@ -47,7 +47,7 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // Get repository and allow pull access from task definition
-    const repository = ecr.Repository.fromRepositoryName(this, "repository", id)
+    const repository = ecr.Repository.fromRepositoryName(this, "repository", id);
     repository.grantPull(executionRole);
 
     // create log group
@@ -107,10 +107,10 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // Create custom URL
-    const hostedZone = r53.PublicHostedZone.fromLookup(this, 'hosted-zone', {
-      domainName: 'oliver-tucher.com',
+    const hostedZone = r53.PublicHostedZone.fromLookup(this, "hosted-zone", {
+      domainName: "oliver-tucher.com",
     });
-    new r53.ARecord(this, 'alias-record', {
+    new r53.ARecord(this, "alias-record", {
       recordName: id,
       target: r53.RecordTarget.fromAlias(new r53Targets.LoadBalancerTarget(loadBalancer)),
       zone: hostedZone,
@@ -118,8 +118,12 @@ export default class FargateStack extends cdk.Stack {
     new cdk.CfnOutput(this, "URL", { value: `https://${id}.${hostedZone.zoneName}` });
 
     // Add HTTPS
-    const acmParameter = ssm.StringParameter.fromStringParameterName(this, 'acm-parameter', '/acm/oliver.tucher.com/arn');
-    const certificate = acm.Certificate.fromCertificateArn(this, 'certificate', acmParameter.stringValue);
+    const acmParameter = ssm.StringParameter.fromStringParameterName(
+      this,
+      "acm-parameter",
+      "/acm/oliver.tucher.com/arn",
+    );
+    const certificate = acm.Certificate.fromCertificateArn(this, "certificate", acmParameter.stringValue);
     loadBalancer.addRedirect({
       sourceProtocol: elbv2.ApplicationProtocol.HTTP,
       sourcePort: 80,
@@ -133,12 +137,14 @@ export default class FargateStack extends cdk.Stack {
       vpc,
       port: 80,
       targets: [fargateService.loadBalancerTarget(clientContainer)],
+      healthCheck: { path: "/health" },
     });
     const serverTargetGroup = new elbv2.ApplicationTargetGroup(this, "server-target-group", {
       targetGroupName: `${id}-server`,
       vpc,
       port: 80,
       targets: [fargateService.loadBalancerTarget(serverContainer)],
+      healthCheck: { path: "/health" },
     });
 
     // add target groups to load balancer
