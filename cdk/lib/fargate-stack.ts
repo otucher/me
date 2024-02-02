@@ -22,7 +22,9 @@ export default class FargateStack extends cdk.Stack {
     console.log(props);
 
     // get vpc
-    const vpc = ec2.Vpc.fromLookup(this, "vpc", { isDefault: true });
+    const vpc = new ec2.Vpc(this, "vpc", {
+      vpcName: id,
+    });
 
     // create cluster
     const cluster = new ecs.Cluster(this, "cluster", {
