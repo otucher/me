@@ -6,8 +6,10 @@ RUN yarn install && yarn build
 
 # Stage 2: Final image
 FROM nginx:alpine
-RUN apk update && apk upgrade && apk --no-cache add \
-  curl
 COPY --from=builder /src/build /usr/share/nginx/html
-EXPOSE 80
+
+# setup health check
+RUN apk update && apk upgrade && apk add --no-cache curl
+COPY --from=builder /src/nginx.conf /etc/nginx/conf.d/default.conf
+
 CMD ["nginx", "-g", "daemon off;"]
