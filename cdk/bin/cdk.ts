@@ -16,4 +16,4 @@ const fargateStack = new FargateStack(app, "resume", {
     region: getEnvVar("AWS_DEFAULT_REGION", "us-east-1"),
   },
 });
-fargateStack.addDependency(repoStack)
+fargateStack.addDependency(repoStack);
