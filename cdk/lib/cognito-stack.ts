@@ -5,8 +5,8 @@ import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-sec
 import { Construct } from "constructs";
 
 export interface GoogleSecret {
-  googleClientId: string;
-  googleClientSecret: string;
+  client_id: string;
+  client_secret: string;
 }
 
 interface Props extends cdk.StackProps {
@@ -59,8 +59,8 @@ export default class CognitoConstruct extends cdk.Stack {
     // add Google federated login
     const federatedIdentityProvider = new cognito.UserPoolIdentityProviderGoogle(this, "user-pool-client-idp", {
       userPool: this.userPool,
-      clientId: googleSecret.googleClientId,
-      clientSecretValue: cdk.SecretValue.unsafePlainText(googleSecret.googleClientSecret),
+      clientId: googleSecret.client_id,
+      clientSecretValue: cdk.SecretValue.unsafePlainText(googleSecret.client_secret),
       scopes: ["email"],
       attributeMapping: {
         email: cognito.ProviderAttribute.GOOGLE_EMAIL,
