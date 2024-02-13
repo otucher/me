@@ -23,7 +23,7 @@ fargateStack.addDependency(repoStack);
 
 const cognitoStack = new CognitoStack(app, "resume-cognito", {
   googleSecretId: "resume/google-oauth2",
-  domainName: "resume.oliver-tucher",
+  domainName: "resume-oliver-tucher",
   callbackUrls: [
     "https://resume.oliver-tucher.com",
   ]
