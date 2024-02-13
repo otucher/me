@@ -40,7 +40,7 @@ export default class CognitoConstruct extends cdk.Stack {
 
     // upload secret with cognito information
     new secretsmanager.Secret(this, "cognito-secret", {
-      secretName: `${id}-cognito`,
+      secretName: id,
       secretObjectValue: {
         cognitoDomain: cdk.SecretValue.unsafePlainText(userPoolDomain.baseUrl()),
         clientId: cdk.SecretValue.unsafePlainText(this.userPoolClient.userPoolClientId),
