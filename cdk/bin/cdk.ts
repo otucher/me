@@ -4,10 +4,13 @@ import * as cdk from "aws-cdk-lib";
 import { getEnvVar } from "../lib/utils";
 import FargateStack from "../lib/fargate-stack";
 import RepoStack from "../lib/repo-stack";
+import CognitoStack from "../lib/cognito-stack";
 
 const repositoryName = getEnvVar("REPOSITORY");
 const app = new cdk.App();
+
 const repoStack = new RepoStack(app, "resume-repo", { repositoryName });
+
 const fargateStack = new FargateStack(app, "resume", {
   repositoryName,
   gitTag: getEnvVar("GIT_TAG", "latest"),
@@ -17,3 +20,11 @@ const fargateStack = new FargateStack(app, "resume", {
   },
 });
 fargateStack.addDependency(repoStack);
+
+const cognitoStack = new CognitoStack(app, "resume-cognito", {
+  googleSecretId: "resume/google-oauth2",
+  domainName: "resume",
+  callbackUrls: [
+    "https://resume.oliver-tucher.com",
+  ]
+});

@@ -28,7 +28,7 @@ export default class FargateStack extends cdk.Stack {
 
     // create cluster
     const cluster = new ecs.Cluster(this, "cluster", {
-      clusterName: "resume",
+      clusterName: id,
       vpc,
       enableFargateCapacityProviders: true,
     });
@@ -111,11 +111,11 @@ export default class FargateStack extends cdk.Stack {
       domainName: "oliver-tucher.com",
     });
     new r53.ARecord(this, "alias-record", {
-      recordName: id,
+      recordName: "resume",
       target: r53.RecordTarget.fromAlias(new r53Targets.LoadBalancerTarget(loadBalancer)),
       zone: hostedZone,
     });
-    new cdk.CfnOutput(this, "URL", { value: `https://${id}.${hostedZone.zoneName}` });
+    new cdk.CfnOutput(this, "URL", { value: `https://resume.${hostedZone.zoneName}` });
 
     // Add HTTPS
     const acmParameter = ssm.StringParameter.fromStringParameterName(

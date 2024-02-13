@@ -140,3 +140,27 @@ jobs:
       - name: Deploy CDK
         working-directory: cdk
         run: node_modules/.bin/cdk deploy resume --require-approval=never --ci
+
+  deploy-cognito:
+    runs-on: ubuntu-latest
+    needs: tag
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions
+          aws-region: us-east-1
+      - name: Set environment variables
+        run: |
+          echo "AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> "$GITHUB_ENV"
+          echo "AWS_DEFAULT_REGION=us-east-1" >> "$GITHUB_ENV"
+          echo "REPOSITORY=$(echo ${{ github.repository }} | sed 's/^otucher\///')" >> "$GITHUB_ENV"
+          echo "GIT_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
+      - name: Yarn install
+        working-directory: cdk
+        run: yarn install --dev --network-timeout 100000
+      - name: Deploy CDK
+        working-directory: cdk
+        run: node_modules/.bin/cdk deploy resume-cognito --require-approval=never --ci
