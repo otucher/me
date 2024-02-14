@@ -1,44 +1,33 @@
 import React, { useEffect, useState } from "react";
-import { Post, Like } from "../../../models";
+import { IPost, IUser } from "../../../models";
 import Comments from "../../organisms/Comments/Comments";
 import Likes from "../../atoms/Likes/Likes";
-import axiosInstance from "../../../axiosInstance"
-import { Optimistic, isOptimistic } from "../../../utils";
+import axiosInstance from "../../../axiosInstance";
 import "./style.css";
 
-const PostComponent: React.FC<Post> = (post) => {
-  const [likes, setLikes] = useState<Optimistic<Like>[]>([])
-  const getLikes = () => {
-    axiosInstance.get(`/posts/${post.id}/likes`).then((response) => setLikes(response.data));
-  }
-  useEffect(getLikes, [post])
+interface Props {
+  post: IPost;
+  user?: IUser;
+}
 
-  // TODO: infer user from session
-  const user = "tester"
-  const handleLike = () => {
-    const newLike = {
-      user,
-      post_id: post.id,
-    };
-    setLikes([...likes, { id: -1, isOptimistic: true,  ...newLike }]);
-    axiosInstance.post("/likes", newLike).then(getLikes);
-  };
-
-  const handleRemoveLike = () => {
-    axiosInstance.delete(`/posts/${post.id}/likes/${user}`).then(getLikes)
-  }
+const Post: React.FC<Props> = ({ post, user }) => {
+  // get post user info
+  const [postUser, setPostUser] = useState<IUser>();
+  useEffect(() => {
+    axiosInstance.get(`/users/${post.user_id}`).then((response) => setPostUser(response.data));
+  }, [post]);
 
   return (
     <div className="post">
       <h3>{post.title}</h3>
       <p>{post.content}</p>
       <div className="post-meta">
-        <p>Author: {post.user}</p>
-        <Likes likes={likes} handleLike={handleLike} handleRemoveLike={handleRemoveLike} />
-        <Comments postId={post.id} />
+        <p>Author: {postUser?.email}</p>
+        <Likes user={user} postId={post.id} />
+        <Comments user={user} postId={post.id} />
       </div>
     </div>
   );
 };
 
-export default PostComponent;
+export default Post;

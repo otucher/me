@@ -1,10 +1,10 @@
 import React from "react";
-import { Post } from "../../../models";
+import { IPost } from "../../../models";
 import { Link } from "react-router-dom";
 import "./style.css";
 
 interface PostsProps {
-  posts: Post[];
+  posts: IPost[];
 }
 
 const Posts: React.FC<PostsProps> = ({ posts }) => {

@@ -1,9 +1,11 @@
-from .models import Post, Comment, Like
+from .models import Post, Comment, Like, User
 
+import json
 import os
 from pathlib import Path
 from typing import Sequence
 
+import boto3
 import sqlmodel as sm
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -20,11 +22,10 @@ SQLModel.metadata.create_all(engine)
 app = FastAPI(root_path="/api")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    # [
-    #   "http://localhost:3000",
-    #   "https://resume.oliver-tucher.com",
-    # ],
+    allow_origins=[
+      "http://localhost:3000",
+      "https://resume.oliver-tucher.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,11 +37,40 @@ def health_check() -> dict[str, str]:
     return {"status": "healthy"}
 
 
+@app.get("/cognito")
+def cognito() -> dict[str, str]:
+    client = boto3.client('secretsmanager')
+    secret = client.get_secret_value(SecretId='resume-cognito')  # defined in cdk/bin/cdk.ts
+    return json.loads(secret['SecretString'])
+
+
 @app.get("/posts")
 def get_posts() -> Sequence[Post]:
     with Session(engine) as session:
         posts = session.exec(sm.select(Post)).all()
         return posts
+
+
+@app.post("/posts")
+def add_post(post: Post) -> Post:
+    print(post)
+    with Session(engine) as session:
+        statement = sm.select(Post).where(
+          Post.title == post.title
+        ).where(
+          Post.content == post.content
+        ).where(
+          Post.user_id == post.user_id
+        )
+        current_post = session.exec(statement).first()
+        if not current_post:
+            session.add(post)
+            session.commit()
+            session.refresh(post)
+            return post
+        else:
+            print("Post already exists.")
+            return current_post
 
 
 @app.get("/posts/{post_id}")
@@ -61,10 +91,10 @@ def get_post_likes(post_id: int) -> Sequence[Like]:
         return likes
 
 
-@app.delete("/posts/{post_id}/likes/{user}")
-def delete_post_like(post_id: int, user: str) -> dict[str, bool]:
+@app.delete("/posts/{post_id}/likes/{user_id}")
+def delete_post_like(post_id: int, user_id: int) -> dict[str, bool]:
     with Session(engine) as session:
-        statement = sm.select(Like).where(Like.post_id == post_id).where(Like.user == user)
+        statement = sm.select(Like).where(Like.post_id == post_id).where(Like.user_id == user_id)
         like = session.exec(statement).first()
         if not like:
             raise HTTPException(status_code=404, detail="Like for user post \"{post_id}\" and \"{user}\" not found")
@@ -86,6 +116,27 @@ def get_comments() -> Sequence[Comment]:
     with Session(engine) as session:
         comments = session.exec(sm.select(Comment)).all()
         return comments
+
+
+@app.post("/comments")
+def add_comment(comment: Comment) -> Comment:
+    with Session(engine) as session:
+        statement = sm.select(Comment).where(
+          Comment.content == comment.content
+        ).where(
+          Comment.user_id == comment.user_id
+        ).where(
+          Comment.post_id == comment.post_id
+        )
+        current_comment = session.exec(statement).first()
+        if not current_comment:
+            session.add(comment)
+            session.commit()
+            session.refresh(comment)
+            return comment
+        else:
+            print("Comment already exists.")
+            return current_comment
 
 
 @app.get("/comments/{comment_id}")
@@ -124,10 +175,10 @@ def get_comment_likes(comment_id: int) -> Sequence[Like]:
         return likes
 
 
-@app.delete("/comments/{comment_id}/likes/{user}")
-def delete_comment_like(comment_id: int, user: str) -> dict[str, bool]:
+@app.delete("/comments/{comment_id}/likes/{user_id}")
+def delete_comment_like(comment_id: int, user_id: int) -> dict[str, bool]:
     with Session(engine) as session:
-        statement = sm.select(Like).where(Like.comment_id == comment_id).where(Like.user == user)
+        statement = sm.select(Like).where(Like.comment_id == comment_id).where(Like.user_id == user_id)
         like = session.exec(statement).first()
         if not like:
             raise HTTPException(status_code=404, detail=f"Like for comment id {comment_id} not found")
@@ -136,31 +187,62 @@ def delete_comment_like(comment_id: int, user: str) -> dict[str, bool]:
         return {"delete": True}
 
 
-@app.post("/posts")
-def add_post(post: Post) -> Post:
-    with Session(engine) as session:
-        session.add(post)
-        session.commit()
-        session.refresh(post)
-        return post
-
-
-@app.post("/comments")
-def add_comment(comment: Comment) -> Comment:
-    with Session(engine) as session:
-        session.add(comment)
-        session.commit()
-        session.refresh(comment)
-        return comment
-
-
 @app.post("/likes")
 def add_like(like: Like) -> Like:
     with Session(engine) as session:
-        session.add(like)
-        session.commit()
-        session.refresh(like)
-        return like
+        statement = sm.select(Like).where(
+          Like.comment_id == like.comment_id
+        ).where(
+          Like.post_id == like.post_id
+        ).where(
+          Like.user_id == like.user_id
+        )
+        current_like = session.exec(statement).first()
+        if not current_like:
+            session.add(like)
+            session.commit()
+            session.refresh(like)
+            return like
+        else:
+            print("Like already exists.")
+            return current_like
+
+
+@app.get("/users")
+def get_users(email: str | None = None) -> Sequence[User]:
+    with Session(engine) as session:
+        statement = sm.select(User)
+        if email:
+            statement = statement.where(User.email == email)
+        users = session.exec(statement).all()
+        if not users:
+            raise HTTPException(status_code=404, detail=f"Users not found with email \"{email}\"")
+        return users
+
+
+@app.get("/users/{user_id}")
+def get_user(user_id: int) -> User:
+    with Session(engine) as session:
+        statement = sm.select(User).where(User.id == user_id)
+        user = session.exec(statement).first()
+        if not user:
+            raise HTTPException(status_code=404, detail=f"Post \"{user_id}\" not found")
+        return user
+
+
+@app.post("/users")
+def add_user(user: User) -> User:
+    with Session(engine) as session:
+        statement = sm.select(User).where(User.email == user.email)
+        current_user = session.exec(statement).first()
+        if not current_user:
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            return user
+        else:
+            print("User already exists.")
+            return current_user
 
 
 def main() -> None:

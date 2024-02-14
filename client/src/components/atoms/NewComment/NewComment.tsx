@@ -1,11 +1,12 @@
 import React, { FormEvent, useState } from "react";
 import "./style.css";
-import { Comment } from "../../../models";
+import { IComment, IUser } from "../../../models";
+import { Without } from "../../../utils";
 
 interface NewCommentProps {
   postId: number;
-  user: string;
-  onSubmitComment: (comment: Comment) => void;
+  user: IUser;
+  onSubmitComment: (comment: Without<IComment>) => void;
 }
 
 const NewComment: React.FC<NewCommentProps> = ({ postId, user, onSubmitComment }) => {
@@ -14,10 +15,9 @@ const NewComment: React.FC<NewCommentProps> = ({ postId, user, onSubmitComment }
     e.preventDefault();
     if (content.trim() !== "") {
       onSubmitComment({
-        id: -1,
         post_id: postId,
+        user_id: user.id,
         content,
-        user,
       });
       // reset the form state
       setContent("");

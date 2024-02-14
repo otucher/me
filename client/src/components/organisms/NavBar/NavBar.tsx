@@ -13,6 +13,9 @@ const Header: React.FC = () => {
           <li>
             <Link to="/posts">Posts</Link>
           </li>
+          <li>
+            <Link to="/user">User</Link>
+          </li>
           {/* Add more links as needed for your application */}
         </ul>
       </nav>

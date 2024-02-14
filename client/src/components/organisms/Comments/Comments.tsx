@@ -1,45 +1,49 @@
 import React, { useState, useEffect } from "react";
-import { Comment } from "../../../models";
+import { IComment, IUser } from "../../../models";
 import axiosInstance from "../../../axiosInstance";
 import NewComment from "../../atoms/NewComment/NewComment";
-import CommentComponent from "../../molecules/Comment/Comment";
-import { Optimistic, isOptimistic } from "../../../utils";
+import Comment from "../../molecules/Comment/Comment";
+import { Without, Optimistic, isOptimistic } from "../../../utils";
 import "./style.css";
 
 interface CommentsProps {
+  user?: IUser;
   postId: number;
 }
 
-const Comments: React.FC<CommentsProps> = ({ postId }) => {
-  const [comments, setComments] = useState<Optimistic<Comment>[]>([]);
+const Comments: React.FC<CommentsProps> = ({ user, postId }) => {
+  const [comments, setComments] = useState<Optimistic<IComment>[]>([]);
   const getComments = () => {
     axiosInstance.get(`/posts/${postId}/comments`).then((response) => setComments(response.data));
-  }
+  };
   useEffect(getComments, [postId]);
 
-  const handleNewComment = (comment: Comment) => {
-    setComments([...comments, { isOptimistic: true, ...comment }]);
+  const handleNewComment = (comment: Without<IComment>) => {
+    const newOptimisticComment = {
+      ...comment,
+      id: -1,
+      created_at: new Date().toISOString(),
+      isOptimistic: true,
+    };
+    setComments([...comments, newOptimisticComment]);
     axiosInstance.post("/comments", comment).then(getComments);
   };
 
-  const handleDeleteComment = (deletedComment: Comment) => {
-    var newComments = comments.filter((com) => com !== deletedComment)
+  const handleDeleteComment = (deletedComment: IComment) => {
+    var newComments = comments.filter((com) => com !== deletedComment);
     setComments([...newComments, { isOptimistic: true, ...deletedComment }]);
-    axiosInstance.delete(`/comments/${deletedComment.id}`).then(getComments)
-  }
+    axiosInstance.delete(`/comments/${deletedComment.id}`).then(getComments);
+  };
 
   return (
     <div className="comments">
       <h3>Comments</h3>
-      <NewComment user={"TestUser"} postId={postId} onSubmitComment={handleNewComment} />
+      {user ? <NewComment user={user} postId={postId} onSubmitComment={handleNewComment} /> : <p>Log in to comment</p>}
       <ul>
         {comments.map((comment, idx) => (
           <li key={idx}>
             <div className="comments" style={{ opacity: isOptimistic(comments) ? 0.5 : undefined }}>
-              <CommentComponent
-                comment={comment}
-                handleDeleteComment={handleDeleteComment}
-              />
+              <Comment user={user} comment={comment} handleDeleteComment={handleDeleteComment} />
             </div>
           </li>
         ))}

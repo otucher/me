@@ -1,23 +1,29 @@
-export interface Post {
+export interface IPost {
   id: number;
+  created_at: string;
   title: string;
   content: string;
-  user: string;
-  timestamp?: string;
+  user_id: number;
 }
 
-export interface Comment {
+export interface IComment {
   id: number;
-  user: string;
+  created_at: string;
+  user_id: number;
   content: string;
-  timestamp?: string;
   post_id: number;
 }
 
-export interface Like {
+export interface ILike {
   id: number;
-  user: string;
-  timestamp?: string;
+  created_at: string;
+  user_id: number;
   comment_id?: number;
   post_id?: number;
+}
+
+export interface IUser {
+  id: number;
+  created_at: string;
+  email: string;
 }
