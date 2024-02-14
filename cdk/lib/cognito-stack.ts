@@ -28,10 +28,11 @@ export default class CognitoConstruct extends cdk.Stack {
     });
     this.userPoolClient = this.userPool.addClient("user-pool-client", {
       userPoolClientName: id,
-      generateSecret: true,
+      // generateSecret: true,
       supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.GOOGLE],
       oAuth: {
         callbackUrls: props.callbackUrls,
+        logoutUrls: props.callbackUrls,
       },
     });
     const userPoolDomain = this.userPool.addDomain("user-pool-domain", {
@@ -43,9 +44,9 @@ export default class CognitoConstruct extends cdk.Stack {
       secretName: id,
       secretObjectValue: {
         cognitoDomain: cdk.SecretValue.unsafePlainText(userPoolDomain.baseUrl()),
-        clientId: cdk.SecretValue.unsafePlainText(this.userPoolClient.userPoolClientId),
-        clientSecret: this.userPoolClient.userPoolClientSecret,
-        userpoolId: cdk.SecretValue.unsafePlainText(this.userPool.userPoolId),
+        userPoolClientId: cdk.SecretValue.unsafePlainText(this.userPoolClient.userPoolClientId),
+        userPoolClientSecret: this.userPoolClient.userPoolClientSecret,
+        userPoolId: cdk.SecretValue.unsafePlainText(this.userPool.userPoolId),
         callbackUrls: cdk.SecretValue.unsafePlainText(JSON.stringify(props.callbackUrls)),
       },
     });
