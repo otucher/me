@@ -14,8 +14,8 @@ interface CognitoSecret {
 export const configureAmplify = async () => {
   const cognitoSecret: CognitoSecret = await instance.get("/cognito").then((response) => response.data);
   const redirectUrl = process.env.NODE_ENV === "production"
-    ? "http://client.resume.localhost/user"
-    : "https://resume.oliver-tucher.com/user";  // match cdk/bin/cdk.ts!
+    ? "https://resume.oliver-tucher.com/user"  // match cdk/bin/cdk.ts!
+    : "http://localhost:3000/user";
   Amplify.configure({
     Auth: {
       Cognito: {

@@ -15,8 +15,8 @@ const cognitoStack = new CognitoStack(app, "resume-cognito", {
   googleSecretId: "resume/google-oauth2",
   domainName: "resume-oliver-tucher",
   callbackUrls: [
-    "http://client.resume.localhost/user",
-    "https://resume.oliver-tucher.com/user",
+    "https://resume.oliver-tucher.com/user",  // match client/src/amplify.ts !
+    "http://localhost:3000/user",
   ]
 });
 
