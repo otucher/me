@@ -74,7 +74,7 @@ export default class FargateStack extends cdk.Stack {
         streamPrefix: `${id}-client`,
         logGroup,
       }),
-      portMappings: [{ hostPort: 8000, containerPort: 80 }],
+      portMappings: [{ hostPort: 80, containerPort: 80 }],
       healthCheck: {
         command: ["CMD-SHELL", `curl -f http://localhost:80/health || exit 1`],
       },
@@ -89,9 +89,9 @@ export default class FargateStack extends cdk.Stack {
         streamPrefix: `${id}-server`,
         logGroup,
       }),
-      portMappings: [{ hostPort: 8080, containerPort: 80 }],
+      portMappings: [{ hostPort: 8000, containerPort: 8000 }],
       healthCheck: {
-        command: ["CMD-SHELL", `curl -f http://localhost:80/health || exit 1`],
+        command: ["CMD-SHELL", `curl -f http://localhost:8000/health || exit 1`],
       },
     });
 
