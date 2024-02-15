@@ -151,7 +151,7 @@ export default class FargateStack extends cdk.Stack {
 
     // create load balancer to client
     const serverTargetGroup = new elbv2.ApplicationTargetGroup(this, "server-target-group", {
-      targetGroupName: `${id}-client`,
+      targetGroupName: `${id}-server`,
       vpc,
       port: 80,
       targets: [fargateService.loadBalancerTarget(serverContainer)],
