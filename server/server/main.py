@@ -2,14 +2,13 @@ import json
 import os
 from functools import cache
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Sequence, Callable, Awaitable
 
 import boto3
 import sqlmodel as sm
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlmodel import Session, SQLModel
 
 from .models import Comment, Like, Post, User
@@ -29,10 +28,15 @@ prod = "prod" in env.lower()
 allowed_origins = ["https://resume.oliver-tucher.com"] if prod else ["http://localhost:3000"]
 app.add_middleware(CORSMiddleware, allow_origins=allowed_origins)
 
-# add Host middleware
-if prod:
-    print("Adding TrustedHostMiddleware")
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_origins)
+
+@app.middleware('http')
+async def protect(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    if "protected" in request.url.path:
+        if not request.client:
+            return Response(status_code=500, content=json.dumps({"message": "System Error"}))
+        if request.client.host not in allowed_origins:
+            return Response(status_code=403, content=json.dumps({"message": "Forbidden"}))
+    return await call_next(request)
 
 
 @cache
@@ -47,7 +51,7 @@ def health_check() -> dict[str, str]:
     return {"status": "healthy"}
 
 
-@app.get("/cognito")
+@app.get("/protected/cognito")
 def cognito() -> dict[str, str]:
     return get_secret("resume-cognito")  # defined in cdk/bin/cdk.ts
 
