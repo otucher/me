@@ -6,7 +6,7 @@ import FargateStack from "../lib/fargate-stack";
 import RepoStack from "../lib/repo-stack";
 import CognitoStack from "../lib/cognito-stack";
 
-const repositoryName = getEnvVar("REPOSITORY");
+const repositoryName = getEnvVar("REPOSITORY", "resume");
 const stackProps = {
   env: {
     account: getEnvVar("AWS_ACCOUNT_ID"),
@@ -26,7 +26,7 @@ const cognitoStack = new CognitoStack(app, "resume-cognito", {
   callbackUrls: [
     "https://resume.oliver-tucher.com/user",  // match client/src/amplify.ts !
     "http://localhost:3000/user",
-  ]
+  ],
   ...stackProps,
 });
 
