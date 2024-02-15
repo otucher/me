@@ -33,11 +33,7 @@ export default class FargateStack extends cdk.Stack {
       clusterName: id,
       vpc,
       enableFargateCapacityProviders: true,
-      defaultCloudMapNamespace: {  // enable cloudspace for internal vpc requests
-        name: id,
-      }
     });
-    cluster.defaultCloudMapNamespace?.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
 
     // create task definition
     const executionRole = new iam.Role(this, "task-def-execution-role", {
@@ -105,10 +101,6 @@ export default class FargateStack extends cdk.Stack {
         { capacityProvider: "FARGATE_SPOT", weight: 4 },
         { capacityProvider: "FARGATE", weight: 1 },
       ],
-      cloudMapOptions: {
-        name: "server",
-        container: serverContainer,
-      },
     });
 
     // Create Load Balancer to forward traffic to client
@@ -143,7 +135,7 @@ export default class FargateStack extends cdk.Stack {
       targetPort: 443,
     });
 
-    // create load balancer to client
+    // create load balancer path to client
     const clientTargetGroup = new elbv2.ApplicationTargetGroup(this, "client-target-group", {
       targetGroupName: `${id}-client`,
       vpc,
@@ -151,10 +143,24 @@ export default class FargateStack extends cdk.Stack {
       targets: [fargateService.loadBalancerTarget(clientContainer)],
       healthCheck: { path: "/health" },
     });
-    loadBalancer.addListener("https-listener", {
+    const listener = loadBalancer.addListener("https-listener", {
       port: 443,
       certificates: [certificate],
       defaultAction: elbv2.ListenerAction.forward([clientTargetGroup]),
+    });
+
+    // create load balancer to client
+    const serverTargetGroup = new elbv2.ApplicationTargetGroup(this, "client-target-group", {
+      targetGroupName: `${id}-client`,
+      vpc,
+      port: 80,
+      targets: [fargateService.loadBalancerTarget(serverContainer)],
+      healthCheck: { path: "/health" },
+    });
+    listener.addAction("server-action", {
+      conditions: [elbv2.ListenerCondition.pathPatterns(["/api/*"])],
+      priority: 1,
+      action: elbv2.ListenerAction.forward([serverTargetGroup]),
     });
   }
 }

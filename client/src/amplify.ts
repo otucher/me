@@ -16,6 +16,7 @@ export const configureAmplify = async () => {
   const redirectUrl = process.env.NODE_ENV === "production"
     ? "https://resume.oliver-tucher.com/user"  // match cdk/bin/cdk.ts!
     : "http://localhost:3000/user";
+  console.log("Redirect URL", redirectUrl);
   Amplify.configure({
     Auth: {
       Cognito: {

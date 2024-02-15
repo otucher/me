@@ -3,12 +3,15 @@ from .models import Post, Comment, Like, User
 import json
 import os
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
+from functools import cache
 
 import boto3
 import sqlmodel as sm
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, SQLModel
 
 # create tables (after importing models)
@@ -18,7 +21,25 @@ engine = sm.create_engine(db_url, echo=True)
 SQLModel.metadata.create_all(engine)
 
 # create REST API
-app = FastAPI()
+app = FastAPI(root_path="/api")
+
+# add CORS
+env = os.environ.get("ENV") or "production"
+prod = "prod" in env.lower()
+allowed_origins = ["https://resume.oliver-tucher.com"] if prod else ["http://localhost:3000"]
+app.add_middleware(CORSMiddleware, allow_origins=allowed_origins)
+
+# add Host middleware
+if prod:
+    print("Adding TrustedHostMiddleware")
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_origins)
+
+
+@cache
+def get_secret(secret_id: str) -> Any:
+    client = boto3.client('secretsmanager')
+    secret = client.get_secret_value(SecretId=secret_id)
+    return json.loads(secret['SecretString'])
 
 
 @app.get("/health")
@@ -28,9 +49,7 @@ def health_check() -> dict[str, str]:
 
 @app.get("/cognito")
 def cognito() -> dict[str, str]:
-    client = boto3.client('secretsmanager')
-    secret = client.get_secret_value(SecretId='resume-cognito')  # defined in cdk/bin/cdk.ts
-    return json.loads(secret['SecretString'])
+    return get_secret('resume-cognito')  # defined in cdk/bin/cdk.ts
 
 
 @app.get("/posts")
