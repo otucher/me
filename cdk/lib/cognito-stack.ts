@@ -1,8 +1,8 @@
 import * as cdk from "aws-cdk-lib";
 import * as cognito from "aws-cdk-lib/aws-cognito";
-import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
-import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
+import * as sm from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
+import { getSecretValue } from "./utils";
 
 export interface GoogleSecret {
   client_id: string;
@@ -18,6 +18,7 @@ interface Props extends cdk.StackProps {
 export default class CognitoConstruct extends cdk.Stack {
   userPool: cognito.UserPool;
   userPoolClient: cognito.UserPoolClient;
+  cognitoSecret: sm.ISecret;
 
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id, props);
@@ -39,7 +40,7 @@ export default class CognitoConstruct extends cdk.Stack {
     });
 
     // upload secret with cognito information
-    new secretsmanager.Secret(this, "cognito-secret", {
+   this.cognitoSecret = new sm.Secret(this, "cognito-secret", {
       secretName: id,
       secretObjectValue: {
         cognitoDomain: cdk.SecretValue.unsafePlainText(userPoolDomain.baseUrl()),
@@ -53,7 +54,7 @@ export default class CognitoConstruct extends cdk.Stack {
   }
 
   async addGoogleIdP(googleSecretId: string) {
-    const googleSecret: GoogleSecret = await this.getSecretValue(googleSecretId)
+    const googleSecret: GoogleSecret = await getSecretValue(googleSecretId)
 
     // add Google federated login
     const federatedIdentityProvider = new cognito.UserPoolIdentityProviderGoogle(this, "user-pool-client-idp", {
@@ -68,15 +69,5 @@ export default class CognitoConstruct extends cdk.Stack {
 
     // workaround https://github.com/aws/aws-cdk/issues/15692
     this.userPoolClient.node.addDependency(federatedIdentityProvider);
-  }
-
-  async getSecretValue(SecretId: string) {
-    const client = new SecretsManagerClient();
-    const command = new GetSecretValueCommand({ SecretId });
-    const response = await client.send(command);
-    if (response.SecretString) {
-      return JSON.parse(response.SecretString);
-    }
-    throw new Error("SecretString not found in response.");
   }
 }

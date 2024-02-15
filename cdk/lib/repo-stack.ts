@@ -7,6 +7,8 @@ interface Props extends cdk.StackProps {
 }
 
 export default class EcrStack extends cdk.Stack {
+  repository: ecr.IRepository;
+
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id, props);
     new ecr.Repository(this, "repository", { repositoryName: props.repositoryName });

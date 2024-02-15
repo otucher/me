@@ -21,7 +21,8 @@ const cognitoStack = new CognitoStack(app, "resume-cognito", {
 });
 
 const fargateStack = new FargateStack(app, "resume", {
-  repositoryName,
+  repository: repoStack.repository,
+  cognitoSecret: cognitoStack.cognitoSecret,
   gitTag: getEnvVar("GIT_TAG", "latest"),
   env: {
     account: getEnvVar("AWS_ACCOUNT_ID"),

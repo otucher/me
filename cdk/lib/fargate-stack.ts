@@ -10,10 +10,12 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import * as r53 from "aws-cdk-lib/aws-route53";
 import * as r53Targets from "aws-cdk-lib/aws-route53-targets";
 import * as ssm from "aws-cdk-lib/aws-ssm";
+import * as sm from "aws-cdk-lib/aws-secretsmanager";
 
 interface Props extends cdk.StackProps {
-  repositoryName: string;
+  repository: ecr.IRepository;
   gitTag: string;
+  cognitoSecret: sm.ISecret;
 }
 
 export default class FargateStack extends cdk.Stack {
@@ -51,8 +53,10 @@ export default class FargateStack extends cdk.Stack {
     });
 
     // Get repository and allow pull access from task definition
-    const repository = ecr.Repository.fromRepositoryName(this, "repository", id);
-    repository.grantPull(executionRole);
+    props.repository.grantPull(executionRole);
+
+    // allow access to cognito secret
+    props.cognitoSecret.grantRead(taskDefinition.taskRole);
 
     // create log group
     const logGroup = new logs.LogGroup(this, "log-group", {
@@ -65,7 +69,7 @@ export default class FargateStack extends cdk.Stack {
     const clientContainer = taskDefinition.addContainer("client-container", {
       containerName: `${id}-client`,
       essential: true,
-      image: ecs.ContainerImage.fromEcrRepository(repository, `client-${props.gitTag}`),
+      image: ecs.ContainerImage.fromEcrRepository(props.repository, `client-${props.gitTag}`),
       logging: ecs.LogDrivers.awsLogs({
         streamPrefix: `${id}-client`,
         logGroup,
@@ -80,7 +84,7 @@ export default class FargateStack extends cdk.Stack {
     const serverContainer = taskDefinition.addContainer("server-container", {
       containerName: `${id}-server`,
       essential: true,
-      image: ecs.ContainerImage.fromEcrRepository(repository, `server-${props.gitTag}`),
+      image: ecs.ContainerImage.fromEcrRepository(props.repository, `server-${props.gitTag}`),
       logging: ecs.LogDrivers.awsLogs({
         streamPrefix: `${id}-server`,
         logGroup,
