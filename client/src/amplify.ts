@@ -1,6 +1,6 @@
 import { Amplify } from "aws-amplify";
 import * as Auth from "aws-amplify/auth";
-import instance from "./axiosInstance";
+import instance from "./api";
 import { throwError } from "./utils";
 import { IUser } from "./models";
 
@@ -13,20 +13,23 @@ interface CognitoSecret {
 
 export const configureAmplify = async () => {
   const cognitoSecret: CognitoSecret = await instance.get("/cognito").then((response) => response.data);
+  const redirectUrl = process.env.NODE_ENV === "production"
+    ? "http://client.resume.localhost/user"
+    : "https://resume.oliver-tucher.com/user";  // match cdk/bin/cdk.ts!
   Amplify.configure({
     Auth: {
       Cognito: {
         userPoolId: cognitoSecret.userPoolId,
         userPoolClientId: cognitoSecret.userPoolClientId,
-        signUpVerificationMethod: "code", // 'code' | 'link'
+        signUpVerificationMethod: "code",
         loginWith: {
           oauth: {
             providers: ["Google"],
             domain: cognitoSecret.cognitoDomain.replace(/^https?:\/\//, ""),
             scopes: ["phone", "email", "profile", "openid", "aws.cognito.signin.user.admin"],
-            redirectSignIn: JSON.parse(cognitoSecret.callbackUrls),
-            redirectSignOut: JSON.parse(cognitoSecret.callbackUrls),
-            responseType: "code", // or 'token', note that REFRESH token will only be generated when the responseType is code
+            redirectSignIn: [redirectUrl],
+            redirectSignOut: [redirectUrl],
+            responseType: "code",
           },
         },
       },

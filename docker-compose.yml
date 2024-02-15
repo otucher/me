@@ -18,27 +18,15 @@ services:
     build: client
     labels:
       - traefik.enable=true
-      - traefik.http.routers.client.rule=Host(`localhost`)
-
-  client-dev:
-    build:
-      context: client
-      target: builder
-    working_dir: /mnt
-    volumes:
-      - ./client:/mnt
-    command: ["yarn", "start"]
-    expose:
-      - 3000
-    environment:
-      - PUBLIC_URL=/dev
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.client-dev.rule=Host(`localhost`) && PathPrefix(`/dev`)
+      - traefik.http.routers.client.rule=Host(`client.resume.localhost`)
 
   server:
     build: server
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_PROFILE=$AWS_PROFILE
     labels:
       - traefik.enable=true
-      - traefik.http.routers.server.rule=Host(`localhost`) && PathPrefix(`/api`)
-      - traefik.http.services.server.loadbalancer.server.port=8000
+      - traefik.http.routers.server.rule=Host(`server.resume.localhost`)
+      - traefik.http.services.server.loadbalancer.server.port=80

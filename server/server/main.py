@@ -9,7 +9,6 @@ import boto3
 import sqlmodel as sm
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, SQLModel
 
 # create tables (after importing models)
@@ -18,18 +17,8 @@ db_url = f"sqlite:///{here.parent}/resume.db"
 engine = sm.create_engine(db_url, echo=True)
 SQLModel.metadata.create_all(engine)
 
-# create REST API at /api
-app = FastAPI(root_path="/api")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-      "http://localhost:3000",
-      "https://resume.oliver-tucher.com",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# create REST API
+app = FastAPI()
 
 
 @app.get("/health")
@@ -246,5 +235,5 @@ def add_user(user: User) -> User:
 
 
 def main() -> None:
-    port = os.environ.get("PORT") or "8000"
+    port = os.environ.get("PORT") or "80"
     uvicorn.run("server.main:app", host="0.0.0.0", port=int(port), proxy_headers=True, reload=True)

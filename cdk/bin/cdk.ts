@@ -11,6 +11,15 @@ const app = new cdk.App();
 
 const repoStack = new RepoStack(app, "resume-repo", { repositoryName });
 
+const cognitoStack = new CognitoStack(app, "resume-cognito", {
+  googleSecretId: "resume/google-oauth2",
+  domainName: "resume-oliver-tucher",
+  callbackUrls: [
+    "http://client.resume.localhost/user",
+    "https://resume.oliver-tucher.com/user",
+  ]
+});
+
 const fargateStack = new FargateStack(app, "resume", {
   repositoryName,
   gitTag: getEnvVar("GIT_TAG", "latest"),
@@ -20,12 +29,4 @@ const fargateStack = new FargateStack(app, "resume", {
   },
 });
 fargateStack.addDependency(repoStack);
-
-const cognitoStack = new CognitoStack(app, "resume-cognito", {
-  googleSecretId: "resume/google-oauth2",
-  domainName: "resume-oliver-tucher",
-  callbackUrls: [
-    "http://localhost:3000/user",
-    "https://resume.oliver-tucher.com/user",
-  ]
-});
+fargateStack.addDependency(cognitoStack);

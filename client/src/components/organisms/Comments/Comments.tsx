@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { IComment, IUser } from "../../../models";
-import axiosInstance from "../../../axiosInstance";
+import axiosInstance from "../../../api";
 import NewComment from "../../atoms/NewComment/NewComment";
 import Comment from "../../molecules/Comment/Comment";
 import { Without, Optimistic, isOptimistic } from "../../../utils";

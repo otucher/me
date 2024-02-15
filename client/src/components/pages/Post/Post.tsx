@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { IPost, IUser } from "../../../models";
 import Comments from "../../organisms/Comments/Comments";
 import Likes from "../../atoms/Likes/Likes";
-import axiosInstance from "../../../axiosInstance";
+import axiosInstance from "../../../api";
 import "./style.css";
 
 interface Props {

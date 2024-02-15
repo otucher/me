@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ILike, IUser } from "../../../models";
-import axiosInstance from "../../../axiosInstance";
+import axiosInstance from "../../../api";
 import { Without, Optimistic, isOptimistic } from "../../../utils";
 import "./style.css";
 

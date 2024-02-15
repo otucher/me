@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { IPost, IUser } from "./models";
-import instance from "./axiosInstance";
+import instance from "./api";
 import { Route, Routes } from "react-router-dom";
 import { getUser } from "./amplify";
 import { Hub } from "aws-amplify/utils";

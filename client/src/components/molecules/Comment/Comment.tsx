@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Likes from "../../atoms/Likes/Likes";
 import { IComment, IUser } from "../../../models";
-import axiosInstance from "../../../axiosInstance";
+import axiosInstance from "../../../api";
 import "./style.css";
 
 interface CommentProps {

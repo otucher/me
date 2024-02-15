@@ -31,7 +31,11 @@ export default class FargateStack extends cdk.Stack {
       clusterName: id,
       vpc,
       enableFargateCapacityProviders: true,
+      defaultCloudMapNamespace: {  // enable cloudspace for internal vpc requests
+        name: id,
+      }
     });
+    cluster.defaultCloudMapNamespace?.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
 
     // create task definition
     const executionRole = new iam.Role(this, "task-def-execution-role", {
@@ -68,7 +72,7 @@ export default class FargateStack extends cdk.Stack {
       }),
       portMappings: [{ containerPort: 80, hostPort: 80 }],
       healthCheck: {
-        command: ["CMD-SHELL", `curl -f http://localhost:80/ || exit 1`],
+        command: ["CMD-SHELL", `curl -f http://localhost:80/health || exit 1`],
       },
     });
 
@@ -81,9 +85,9 @@ export default class FargateStack extends cdk.Stack {
         streamPrefix: `${id}-server`,
         logGroup,
       }),
-      portMappings: [{ containerPort: 8000, hostPort: 8000 }],
+      portMappings: [{ containerPort: 80, hostPort: 80 }],
       healthCheck: {
-        command: ["CMD-SHELL", `curl -f http://localhost:8000/health || exit 1`],
+        command: ["CMD-SHELL", `curl -f http://localhost:80/health || exit 1`],
       },
     });
 
@@ -97,6 +101,10 @@ export default class FargateStack extends cdk.Stack {
         { capacityProvider: "FARGATE_SPOT", weight: 4 },
         { capacityProvider: "FARGATE", weight: 1 },
       ],
+      cloudMapOptions: {
+        name: "server",
+        container: serverContainer,
+      },
     });
 
     // Create Load Balancer to forward traffic to client
@@ -131,7 +139,7 @@ export default class FargateStack extends cdk.Stack {
       targetPort: 443,
     });
 
-    // create target groups
+    // create load balancer to client
     const clientTargetGroup = new elbv2.ApplicationTargetGroup(this, "client-target-group", {
       targetGroupName: `${id}-client`,
       vpc,
@@ -139,24 +147,10 @@ export default class FargateStack extends cdk.Stack {
       targets: [fargateService.loadBalancerTarget(clientContainer)],
       healthCheck: { path: "/health" },
     });
-    const serverTargetGroup = new elbv2.ApplicationTargetGroup(this, "server-target-group", {
-      targetGroupName: `${id}-server`,
-      vpc,
-      port: 80,
-      targets: [fargateService.loadBalancerTarget(serverContainer)],
-      healthCheck: { path: "/health" },
-    });
-
-    // add target groups to load balancer
-    const listener = loadBalancer.addListener("https-listener", {
+    loadBalancer.addListener("https-listener", {
       port: 443,
       certificates: [certificate],
       defaultAction: elbv2.ListenerAction.forward([clientTargetGroup]),
-    });
-    listener.addAction("server-action", {
-      priority: 1,
-      conditions: [elbv2.ListenerCondition.pathPatterns(["/api/*"])],
-      action: elbv2.ListenerAction.forward([serverTargetGroup]),
     });
   }
 }

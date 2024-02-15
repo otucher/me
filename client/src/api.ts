@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const apiUrl = process.env.NODE_ENV === "production" ? `${window.location.origin}/api` : "http://localhost:8000/api";
+const apiUrl = process.env.NODE_ENV === "production"
+  ? "http://server.resume"
+  : "http://server.resume.localhost";
 
 const instance = axios.create({
   baseURL: apiUrl,
