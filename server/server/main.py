@@ -1,18 +1,18 @@
-from .models import Post, Comment, Like, User
-
 import json
 import os
+from functools import cache
 from pathlib import Path
 from typing import Any, Sequence
-from functools import cache
 
 import boto3
 import sqlmodel as sm
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlmodel import Session, SQLModel
+
+from .models import Comment, Like, Post, User
 
 # create tables (after importing models)
 here = Path(__file__).parent.resolve()
@@ -37,9 +37,9 @@ if prod:
 
 @cache
 def get_secret(secret_id: str) -> Any:
-    client = boto3.client('secretsmanager')
+    client = boto3.client("secretsmanager")
     secret = client.get_secret_value(SecretId=secret_id)
-    return json.loads(secret['SecretString'])
+    return json.loads(secret["SecretString"])
 
 
 @app.get("/health")
@@ -49,7 +49,7 @@ def health_check() -> dict[str, str]:
 
 @app.get("/cognito")
 def cognito() -> dict[str, str]:
-    return get_secret('resume-cognito')  # defined in cdk/bin/cdk.ts
+    return get_secret("resume-cognito")  # defined in cdk/bin/cdk.ts
 
 
 @app.get("/posts")
@@ -63,12 +63,11 @@ def get_posts() -> Sequence[Post]:
 def add_post(post: Post) -> Post:
     print(post)
     with Session(engine) as session:
-        statement = sm.select(Post).where(
-          Post.title == post.title
-        ).where(
-          Post.content == post.content
-        ).where(
-          Post.user_id == post.user_id
+        statement = (
+            sm.select(Post)
+            .where(Post.title == post.title)
+            .where(Post.content == post.content)
+            .where(Post.user_id == post.user_id)
         )
         current_post = session.exec(statement).first()
         if not current_post:
@@ -87,7 +86,7 @@ def get_post(post_id: int) -> Post:
         statement = sm.select(Post).where(Post.id == post_id)
         post = session.exec(statement).first()
         if not post:
-            raise HTTPException(status_code=404, detail=f"Post \"{post_id}\" not found")
+            raise HTTPException(status_code=404, detail=f'Post "{post_id}" not found')
         return post
 
 
@@ -105,7 +104,7 @@ def delete_post_like(post_id: int, user_id: int) -> dict[str, bool]:
         statement = sm.select(Like).where(Like.post_id == post_id).where(Like.user_id == user_id)
         like = session.exec(statement).first()
         if not like:
-            raise HTTPException(status_code=404, detail="Like for user post \"{post_id}\" and \"{user}\" not found")
+            raise HTTPException(status_code=404, detail=f'Like for user post "{post_id}" and "{user_id}" not found')
         session.delete(like)
         session.commit()
         return {"delete": True}
@@ -129,12 +128,11 @@ def get_comments() -> Sequence[Comment]:
 @app.post("/comments")
 def add_comment(comment: Comment) -> Comment:
     with Session(engine) as session:
-        statement = sm.select(Comment).where(
-          Comment.content == comment.content
-        ).where(
-          Comment.user_id == comment.user_id
-        ).where(
-          Comment.post_id == comment.post_id
+        statement = (
+            sm.select(Comment)
+            .where(Comment.content == comment.content)
+            .where(Comment.user_id == comment.user_id)
+            .where(Comment.post_id == comment.post_id)
         )
         current_comment = session.exec(statement).first()
         if not current_comment:
@@ -153,7 +151,7 @@ def get_comment(comment_id: int) -> Comment:
         statement = sm.select(Comment).where(Comment.id == comment_id)
         post = session.exec(statement).first()
         if not post:
-            raise HTTPException(status_code=404, detail=f"Post \"{comment_id}\" not found")
+            raise HTTPException(status_code=404, detail=f'Post "{comment_id}" not found')
         return post
 
 
@@ -198,12 +196,11 @@ def delete_comment_like(comment_id: int, user_id: int) -> dict[str, bool]:
 @app.post("/likes")
 def add_like(like: Like) -> Like:
     with Session(engine) as session:
-        statement = sm.select(Like).where(
-          Like.comment_id == like.comment_id
-        ).where(
-          Like.post_id == like.post_id
-        ).where(
-          Like.user_id == like.user_id
+        statement = (
+            sm.select(Like)
+            .where(Like.comment_id == like.comment_id)
+            .where(Like.post_id == like.post_id)
+            .where(Like.user_id == like.user_id)
         )
         current_like = session.exec(statement).first()
         if not current_like:
@@ -224,7 +221,7 @@ def get_users(email: str | None = None) -> Sequence[User]:
             statement = statement.where(User.email == email)
         users = session.exec(statement).all()
         if not users:
-            raise HTTPException(status_code=404, detail=f"Users not found with email \"{email}\"")
+            raise HTTPException(status_code=404, detail=f'Users not found with email "{email}"')
         return users
 
 
@@ -234,7 +231,7 @@ def get_user(user_id: int) -> User:
         statement = sm.select(User).where(User.id == user_id)
         user = session.exec(statement).first()
         if not user:
-            raise HTTPException(status_code=404, detail=f"Post \"{user_id}\" not found")
+            raise HTTPException(status_code=404, detail=f'Post "{user_id}" not found')
         return user
 
 

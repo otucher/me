@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlmodel import SQLModel, Field  # type: ignore
+from sqlmodel import Field, SQLModel  # type: ignore
 
 
 class Post(SQLModel, table=True):
