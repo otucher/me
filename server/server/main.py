@@ -26,17 +26,11 @@ app = FastAPI(root_path="/api")
 env = os.environ.get("ENV") or "production"
 prod = "prod" in env.lower()
 allowed_origins = ["https://resume.oliver-tucher.com"] if prod else ["http://localhost:3000"]
-app.add_middleware(CORSMiddleware, allow_origins=allowed_origins)
-
-
-@app.middleware('http')
-async def protect(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
-    if "protected" in request.url.path:
-        if not request.client:
-            return Response(status_code=500, content=json.dumps({"message": "System Error"}))
-        if request.client.host not in allowed_origins:
-            return Response(status_code=403, content=json.dumps({"message": "Forbidden"}))
-    return await call_next(request)
+app.add_middleware(
+  CORSMiddleware,
+  allow_origins=allowed_origins,
+  allow_methods=["GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
+)
 
 
 @cache
@@ -51,7 +45,7 @@ def health_check() -> dict[str, str]:
     return {"status": "healthy"}
 
 
-@app.get("/protected/cognito")
+@app.get("/cognito")
 def cognito() -> dict[str, str]:
     return get_secret("resume-cognito")  # defined in cdk/bin/cdk.ts
 
